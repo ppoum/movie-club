@@ -85,7 +85,7 @@ def get_list_slugs(owner: str, slug: str) -> List[str]:
     return slugs
 
 
-def main(
+def start(
     list_owner: str,
     list_slug: str,
     club_users: List[str],
@@ -138,7 +138,7 @@ def get_env_var(name: str, default: str | None = None) -> str:
     return value
 
 
-if __name__ == "__main__":
+def main():
     log_level = get_env_var("LOGLEVEL", default="INFO")
     logging.basicConfig(level=log_level)
 
@@ -153,4 +153,7 @@ if __name__ == "__main__":
         logger.fatal("Invalid TOP_ACTOR_COUNT value")
         sys.exit(1)
 
-    main(list_owner, list_slug, club_users, top_actor_count, output_path)
+    start(list_owner, list_slug, club_users, top_actor_count, output_path)
+
+if __name__ == "__main__":
+    main()
