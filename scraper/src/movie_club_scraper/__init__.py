@@ -85,12 +85,12 @@ def get_list_slugs(owner: str, slug: str) -> List[str]:
     return slugs
 
 
-def main(
+def start(
     list_owner: str,
     list_slug: str,
     club_users: List[str],
     top_actor_count: int,
-    output_path: str,
+    output_dir: str,
 ):
     slugs = get_list_slugs(list_owner, list_slug)
     logger.info(f"Found {len(slugs)} movie slugs in list")
@@ -126,8 +126,10 @@ def main(
         movie_info.club_ratings = ratings
 
     output_format = [asdict(m) for m in movies_info]
-    with open(output_path, "w") as f:
+    output_file = os.path.join(output_dir, "stats.json")
+    with open(output_file, "w") as f:
         f.write(json.dumps(output_format))
+    logger.info(f"Stats written to {output_file}")
 
 
 def get_env_var(name: str, default: str | None = None) -> str:
@@ -138,14 +140,17 @@ def get_env_var(name: str, default: str | None = None) -> str:
     return value
 
 
-if __name__ == "__main__":
+def main():
     log_level = get_env_var("LOGLEVEL", default="INFO")
     logging.basicConfig(level=log_level)
 
     list_owner = get_env_var("LIST_OWNER")
     list_slug = get_env_var("LIST_SLUG")
     club_users = get_env_var("CLUB_USERS").split(",")
-    output_path = get_env_var("OUTPUT_PATH")
+    output_dir = get_env_var("OUTPUT_DIRECTORY", default="")
+    if output_dir == "":
+        # Fallback to STATE_DIRECTORY
+        output_dir = get_env_var("STATE_DIRECTORY")
 
     try:
         top_actor_count = int(get_env_var("TOP_ACTOR_COUNT", default="4"))
@@ -153,4 +158,8 @@ if __name__ == "__main__":
         logger.fatal("Invalid TOP_ACTOR_COUNT value")
         sys.exit(1)
 
-    main(list_owner, list_slug, club_users, top_actor_count, output_path)
+    start(list_owner, list_slug, club_users, top_actor_count, output_dir)
+
+
+if __name__ == "__main__":
+    main()

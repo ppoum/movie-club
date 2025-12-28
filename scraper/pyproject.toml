@@ -1,0 +1,12 @@
+[project]
+name = "movie-club-scraper"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["letterboxdpy==5.3.7"]
+
+[project.scripts]
+movie-club-scraper = "movie_club_scraper:main"
+
+[build-system]
+requires = ["uv_build == 0.9.18"]
+build-backend = "uv_build"

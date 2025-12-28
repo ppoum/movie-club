@@ -1,18 +1,17 @@
-import express from "express";
-import fs from "fs/promises";
-import path from "path";
-import { fileURLToPath } from "url";
+const express = require("express");
+const fs = require("fs/promises");
+const path = require("path");
 
 const app = express();
-const PORT = 3000;
 
-// TODO: refactor into env var
-const DATA_PATH = "../out.json";
+const PORT = process.env.PORT || 3000;
+const DATA_FILE = process.env.DATA_FILE_PATH || "../stats.json";
+const DIST_DIR = process.env.FRONTEND_DIST_DIR || "../dist/";
 
 app.get("/api/data", async (_req, res) => {
   let json: string;
   try {
-    json = await fs.readFile(DATA_PATH, "utf-8");
+    json = await fs.readFile(DATA_FILE, "utf-8");
   } catch {
     return res.status(500).json({ error: "Failed to read JSON file" });
   }
@@ -25,9 +24,7 @@ app.get("/api/data", async (_req, res) => {
 });
 
 // Serve static app
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const distPath = path.resolve(__dirname, "../dist/");
+const distPath = path.resolve(__dirname, DIST_DIR);
 app.use(express.static(distPath));
 
 // Fallback to vite app
