@@ -50,13 +50,29 @@ function getAverageMemberRating(data: Movie[], username: string): number | null 
 
 function getTop3Movies(movies: Movie[]): Movie[] {
   return [...movies]
-    .sort((a, b) => (getAverageClubRating(b) ?? 0) - (getAverageClubRating(a) ?? 0))
+    .filter(movie => {
+      const rating = getAverageClubRating(movie);
+      return rating !== null && rating !== 0;
+    })
+    .sort((a, b) => {
+      const ratingA = getAverageClubRating(a) as number;
+      const ratingB = getAverageClubRating(b) as number;
+      return ratingB - ratingA;
+    })
     .slice(0, 3);
 }
 
 function getBottom3Movies(movies: Movie[]): Movie[] {
   return [...movies]
-    .sort((a, b) => (getAverageClubRating(a) ?? 0) - (getAverageClubRating(b) ?? 0))
+    .filter(movie => {
+      const rating = getAverageClubRating(movie);
+      return rating !== null && rating !== 0;
+    })
+    .sort((a, b) => {
+      const ratingA = getAverageClubRating(a) as number;
+      const ratingB = getAverageClubRating(b) as number;
+      return ratingA - ratingB;
+    })
     .slice(0, 3);
 }
 
