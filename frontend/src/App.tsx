@@ -28,52 +28,35 @@ type Actor = {
   role_name: string;
 };
 
+/* ================= HELPERS ================= */
+
 function getAverageClubRating(movie: Movie): number | null {
   const ratings = Object.values(movie.club_ratings).filter(
     (r): r is number => r !== null,
   );
-
   if (!ratings.length) return null;
-
   const sum_ratings = ratings.reduce((sum, r) => sum + r, 0);
-
-  // Ratings are stored as 1-10 instead of 1-5 floats, divide by 2
   return sum_ratings / (2 * ratings.length);
 }
 
-function getAverageMemberRating(
-  data: Movie[],
-  username: string,
-): number | null {
-  // Collect all ratings for this user that are not null
+function getAverageMemberRating(data: Movie[], username: string): number | null {
   const ratings: number[] = data
     .map((movie) => movie.club_ratings[username])
     .filter((r): r is number => r !== null);
-
   if (!ratings.length) return null;
-
-  // Ratings are stored as 1-10 instead of 1-5, divide by 2
   const sum = ratings.reduce((acc, r) => acc + r, 0);
   return sum / (2 * ratings.length);
 }
 
 function getTop3Movies(movies: Movie[]): Movie[] {
   return [...movies]
-    .sort((a, b) => {
-      const clubRatingA = getAverageClubRating(a) ?? 0;
-      const clubRatingB = getAverageClubRating(b) ?? 0;
-      return clubRatingB - clubRatingA; // Sort in descending order
-    })
+    .sort((a, b) => (getAverageClubRating(b) ?? 0) - (getAverageClubRating(a) ?? 0))
     .slice(0, 3);
 }
 
 function getBottom3Movies(movies: Movie[]): Movie[] {
   return [...movies]
-    .sort((a, b) => {
-      const clubRatingA = getAverageClubRating(a) ?? 0;
-      const clubRatingB = getAverageClubRating(b) ?? 0;
-      return clubRatingA - clubRatingB; // Sort in ascending order
-    })
+    .sort((a, b) => (getAverageClubRating(a) ?? 0) - (getAverageClubRating(b) ?? 0))
     .slice(0, 3);
 }
 
@@ -83,144 +66,131 @@ function GetTotalRuntime(movies: Movie[]): number {
 
 function GetLongestRuntime(movies: Movie[]): Movie | null {
   if (movies.length === 0) return null;
-  return movies.reduce((longest, movie) => {
-    return movie.runtime > longest.runtime ? movie : longest;
-  });
+  return movies.reduce((longest, movie) => (movie.runtime > longest.runtime ? movie : longest));
 }
 
 function GetShortestRuntime(movies: Movie[]): Movie | null {
   if (movies.length === 0) return null;
-  return movies.reduce((shortest, movie) => {
-    return movie.runtime < shortest.runtime ? movie : shortest;
-  });
+  return movies.reduce((shortest, movie) => (movie.runtime < shortest.runtime ? movie : shortest));
 }
 
 function GetNewestMovie(movies: Movie[]): Movie | null {
   if (movies.length === 0) return null;
-  return movies.reduce((newest, movie) => {
-    return movie.year > newest.year ? movie : newest;
-  });
+  return movies.reduce((newest, movie) => (movie.year > newest.year ? movie : newest));
 }
 
 function GetOldestMovie(movies: Movie[]): Movie | null {
   if (movies.length === 0) return null;
-  return movies.reduce((oldest, movie) => {
-    return movie.year < oldest.year ? movie : oldest;
-  });
+  return movies.reduce((oldest, movie) => (movie.year < oldest.year ? movie : oldest));
 }
 
 function GetMembersData(data: Movie[]) {
-  const members: Record<
-    string,
-    {
-      username: string;
-      lowestRatingMovie: string | null;
-      highestRatingMovie: string | null;
-    }
-  > = {};
-
+  const members: Record<string, { username: string; lowestRatingMovie: string | null; highestRatingMovie: string | null }> = {};
   data.forEach((movie) => {
     Object.entries(movie.club_ratings).forEach(([username, rating]) => {
       if (!members[username]) {
-        members[username] = {
-          username,
-          lowestRatingMovie: rating !== null ? movie.slug : null,
-          highestRatingMovie: rating !== null ? movie.slug : null,
-        };
+        members[username] = { username, lowestRatingMovie: rating !== null ? movie.slug : null, highestRatingMovie: rating !== null ? movie.slug : null };
       } else if (rating !== null) {
-        // Update lowest rating movie
         const currentLowestSlug = members[username].lowestRatingMovie;
-        if (!currentLowestSlug) {
-          members[username].lowestRatingMovie = movie.slug;
-        } else {
-          const currentLowestRating = data.find(
-            (m) => m.slug === currentLowestSlug,
-          )?.club_ratings[username];
-          if (
-            currentLowestRating !== undefined &&
-            rating < currentLowestRating
-          ) {
-            members[username].lowestRatingMovie = movie.slug;
-          }
-        }
+        const currentLowestRating = data.find((m) => m.slug === currentLowestSlug)?.club_ratings[username];
+        if (currentLowestRating === undefined || rating < currentLowestRating) members[username].lowestRatingMovie = movie.slug;
 
-        // Update highest rating movie
         const currentHighestSlug = members[username].highestRatingMovie;
-        if (!currentHighestSlug) {
-          members[username].highestRatingMovie = movie.slug;
-        } else {
-          const currentHighestRating = data.find(
-            (m) => m.slug === currentHighestSlug,
-          )?.club_ratings[username];
-          if (
-            currentHighestRating !== undefined &&
-            rating > currentHighestRating
-          ) {
-            members[username].highestRatingMovie = movie.slug;
-          }
-        }
+        const currentHighestRating = data.find((m) => m.slug === currentHighestSlug)?.club_ratings[username];
+        if (currentHighestRating === undefined || rating > currentHighestRating) members[username].highestRatingMovie = movie.slug;
       }
     });
   });
-
   return Object.values(members);
 }
 
 function getMovieBySlug(data: Movie[], slug: string): Movie | null {
-  const movie = data.find((m) => m.slug === slug);
-  return movie ?? null;
+  return data.find((m) => m.slug === slug) ?? null;
 }
 
 function starify(rating: number | null): string {
   if (rating === null) return "N/A";
-
   const fullStars = Math.floor(rating / 2);
   const halfStar = rating / 2 - fullStars >= 0.5 ? "½" : "";
-
   return "★".repeat(fullStars) + halfStar;
 }
 
-function MovieList({ data }: { data: Movie[] }) {
+/* ================= SHARED COMPONENTS ================= */
+
+function MovieCard({ movie, onClick }: { movie: Movie; onClick: (m: Movie) => void }) {
+  const clubRating = getAverageClubRating(movie);
   return (
-    <div className="movie-grid">
-      {data.map((movie) => {
-        const clubRating = getAverageClubRating(movie);
-        return (
-          <div className="movie-card" key={movie.slug}>
-            <div className="poster-container">
-              <img
-                src={movie.poster_url}
-                alt={movie.title}
-                className="movie-poster"
-              />
-            </div>
-            <div className="movie-title">
-              <strong>{movie.title}</strong> ({movie.year})<br />
-            </div>
-            <div className="movie-rating">
-              Club Rating: {clubRating === null ? "N/A" : clubRating.toFixed(2)}{" "}
-              ({movie.avg_rating})
-            </div>
-          </div>
-        );
-      })}
+    <div className="movie-card" onClick={() => onClick(movie)} style={{ cursor: "pointer" }}>
+      <div className="poster-container">
+        <img src={movie.poster_url} alt={movie.title} className="movie-poster" />
+      </div>
+      <div className="movie-title">
+        <strong>{movie.title}</strong> ({movie.year})<br />
+      </div>
+      <div className="movie-rating">
+        Club Rating: {clubRating === null ? "N/A" : clubRating.toFixed(2)} ({movie.avg_rating})
+      </div>
     </div>
   );
 }
 
-function MembersPage({ data }: { data: Movie[] }) {
-  const membersData = GetMembersData(data);
+function SmallMovieCard({ movie, onClick }: { movie: Movie; onClick: (m: Movie) => void }) {
+  return (
+    <div className="movie-card small" onClick={() => onClick(movie)} style={{ cursor: "pointer" }}>
+      <div className="poster-container">
+        <img src={movie.poster_url} alt={movie.title} className="movie-poster" />
+      </div>
+      <div className="movie-title">
+        <strong>{movie.title}</strong> ({movie.year})
+      </div>
+    </div>
+  );
+}
 
+function MovieModal({ movie, onClose }: { movie: Movie; onClose: () => void }) {
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-body">
+          <img src={movie.poster_url} alt={movie.title} className="modal-poster" />
+          <div className="modal-details">
+            <h2>{movie.title} ({movie.year})</h2>
+            <p><strong>Director:</strong> {movie.director.name}</p>
+            <p><strong>Runtime:</strong> {movie.runtime} minutes</p>
+            <p><strong>Global Rating:</strong> {movie.avg_rating}</p>
+            <p><strong>Club Rating:</strong> {getAverageClubRating(movie)?.toFixed(2) ?? "N/A"}</p>
+            <p><strong>Cast:</strong></p>
+            <ul>
+              {movie.top_actors.slice(0, 5).map(actor => (
+                <li key={actor.slug}>{actor.name} as <em>{actor.role_name}</em></li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================= PAGE COMPONENTS ================= */
+
+function MovieList({ data, onMovieClick }: { data: Movie[]; onMovieClick: (m: Movie) => void }) {
+  return (
+    <div className="movie-grid">
+      {data.map((movie) => (
+        <MovieCard key={movie.slug} movie={movie} onClick={onMovieClick} />
+      ))}
+    </div>
+  );
+}
+
+function MembersPage({ data, onMovieClick }: { data: Movie[]; onMovieClick: (m: Movie) => void }) {
+  const membersData = GetMembersData(data);
   return (
     <div className="members-grid">
       {membersData.map((member) => {
-        const lowestMovie = member.lowestRatingMovie
-          ? getMovieBySlug(data, member.lowestRatingMovie)
-          : null;
-        const highestMovie = member.highestRatingMovie
-          ? getMovieBySlug(data, member.highestRatingMovie)
-          : null;
-
+        const lowestMovie = member.lowestRatingMovie ? getMovieBySlug(data, member.lowestRatingMovie) : null;
+        const highestMovie = member.highestRatingMovie ? getMovieBySlug(data, member.highestRatingMovie) : null;
         const averageRating = getAverageMemberRating(data, member.username);
 
         return (
@@ -231,56 +201,21 @@ function MembersPage({ data }: { data: Movie[] }) {
                 <h3>Highest Rating</h3>
                 {highestMovie ? (
                   <>
-                    <div className="movie-card small" key={highestMovie.slug}>
-                      <div className="poster-container">
-                        <img
-                          src={highestMovie.poster_url}
-                          alt={highestMovie.title}
-                          className="movie-poster"
-                        />
-                      </div>
-                      <div className="movie-title">
-                        <strong>{highestMovie.title}</strong> (
-                        {highestMovie.year})<br />
-                      </div>
-                    </div>
-                    <p style={{ paddingTop: "1rem" }}>
-                      {starify(highestMovie.club_ratings[member.username])}
-                    </p>
+                    <SmallMovieCard movie={highestMovie} onClick={onMovieClick} />
+                    <p style={{ paddingTop: "1rem" }}>{starify(highestMovie.club_ratings[member.username])}</p>
                   </>
-                ) : (
-                  <p>No highest rated movie yet</p>
-                )}
+                ) : <p>No highest rated movie yet</p>}
               </div>
-
               <div className="member-card">
                 <h3>Lowest Rating</h3>
                 {lowestMovie ? (
                   <>
-                    <div className="movie-card small" key={lowestMovie.slug}>
-                      <div className="poster-container">
-                        <img
-                          src={lowestMovie.poster_url}
-                          alt={lowestMovie.title}
-                          className="movie-poster"
-                        />
-                      </div>
-                      <div className="movie-title">
-                        <strong>{lowestMovie.title}</strong> ({lowestMovie.year}
-                        )<br />
-                      </div>
-                    </div>
-                    <p style={{ paddingTop: "1rem" }}>
-                      {starify(lowestMovie.club_ratings[member.username])}
-                    </p>
+                    <SmallMovieCard movie={lowestMovie} onClick={onMovieClick} />
+                    <p style={{ paddingTop: "1rem" }}>{starify(lowestMovie.club_ratings[member.username])}</p>
                   </>
-                ) : (
-                  <p>No lowest rated movie yet</p>
-                )}
+                ) : <p>No lowest rated movie yet</p>}
               </div>
             </div>
-
-            {/* Average rating full-width bar */}
             <div className="member-average">
               <h3>Average Rating</h3>
               <p>{averageRating !== null ? averageRating.toFixed(2) : "N/A"}</p>
@@ -292,7 +227,7 @@ function MembersPage({ data }: { data: Movie[] }) {
   );
 }
 
-function ClubPage({ data }: { data: Movie[] }) {
+function ClubPage({ data, onMovieClick }: { data: Movie[]; onMovieClick: (m: Movie) => void }) {
   const top3Movies = getTop3Movies(data);
   const bottom3Movies = getBottom3Movies(data);
   const totalRuntime = GetTotalRuntime(data);
@@ -303,69 +238,33 @@ function ClubPage({ data }: { data: Movie[] }) {
 
   return (
     <div className="club-page">
-      {/* Banner */}
-      {/* <div className="club-banner">
-        <h1>Welcome to the Movie Club</h1>
-        <p>Explore the stats and highlights of our club's movie ratings!</p>
-      </div> */}
-
-      {/* Stats Section */}
       <div className="club-stats">
-        {/* Top 3 Highest Rated Movies */}
         <div className="stat-section">
           <h2>Top 3 Highest Rated Movies</h2>
           <div className="podium">
-            {top3Movies.map((movie, index) => {
-              const clubRating = getAverageClubRating(movie); // Calculate the average club rating
-              return (
-                <div
-                  key={movie.slug}
-                  className={`podium-item ${
-                    index === 0 ? "first" : index === 1 ? "second" : "third"
-                  }`}
-                >
-                  <div className="podium-rank">
-                    {index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"}
-                  </div>
-                  <strong className="movie-title">{movie.title}</strong>
-                  <div className="movie-rating">
-                    Club Rating:{" "}
-                    {clubRating === null ? "N/A" : clubRating.toFixed(2)}
-                  </div>
-                </div>
-              );
-            })}
+            {top3Movies.map((movie, index) => (
+              <div key={movie.slug} className={`podium-item ${index === 0 ? "first" : index === 1 ? "second" : "third"}`} onClick={() => onMovieClick(movie)} style={{cursor: 'pointer'}}>
+                <div className="podium-rank">{index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"}</div>
+                <strong className="movie-title">{movie.title}</strong>
+                <div className="movie-rating">Club: {getAverageClubRating(movie)?.toFixed(2) ?? "N/A"}</div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Top 3 Lowest Rated Movies */}
         <div className="stat-section">
           <h2>Top 3 Lowest Rated Movies</h2>
           <div className="podium">
-            {bottom3Movies.map((movie, index) => {
-              const clubRating = getAverageClubRating(movie); // Calculate the average club rating
-              return (
-                <div
-                  key={movie.slug}
-                  className={`podium-item ${
-                    index === 0 ? "first" : index === 1 ? "second" : "third"
-                  }`}
-                >
-                  <div className="podium-rank">
-                    {index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"}
-                  </div>
-                  <strong className="movie-title">{movie.title}</strong>
-                  <div className="movie-rating">
-                    Club Rating:{" "}
-                    {clubRating === null ? "N/A" : clubRating.toFixed(2)}
-                  </div>
-                </div>
-              );
-            })}
+            {bottom3Movies.map((movie, index) => (
+              <div key={movie.slug} className={`podium-item ${index === 0 ? "first" : index === 1 ? "second" : "third"}`} onClick={() => onMovieClick(movie)} style={{cursor: 'pointer'}}>
+                <div className="podium-rank">{index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"}</div>
+                <strong className="movie-title">{movie.title}</strong>
+                <div className="movie-rating">Club: {getAverageClubRating(movie)?.toFixed(2) ?? "N/A"}</div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Viewing Stats Cards */}
         <div className="stat-section">
           <h2>Viewing Stats</h2>
           <div className="stat-cards">
@@ -375,114 +274,61 @@ function ClubPage({ data }: { data: Movie[] }) {
             </div>
             <div className="stat-card" style={{ width: "150px" }}>
               <h3>Total Runtime</h3>
-              <p>{Math.round(totalRuntime)} minutes</p>
               <p>{Math.round(totalRuntime / 60)} hours</p>
             </div>
           </div>
 
-          {/* Spacer between sections */}
           <div style={{ height: "2rem" }} />
-          {shortestMovie && longestMovie && (
-            <div className="stat-cards">
+          <div className="stat-cards">
+            {shortestMovie && (
               <div className="stat-card">
-                <h3>Shortest Runtime</h3>
-                <div className="movie-card small" key={shortestMovie.slug}>
-                  <div className="poster-container">
-                    <img
-                      src={shortestMovie.poster_url}
-                      alt={shortestMovie.title}
-                      className="movie-poster"
-                    />
-                  </div>
-                  <div className="movie-title">
-                    <strong>{shortestMovie.title}</strong> ({shortestMovie.year}
-                    )<br />
-                  </div>
-                </div>
-                <p style={{ paddingTop: "1rem" }}>
-                  {shortestMovie.runtime} minutes
-                </p>
+                <h3>Shortest</h3>
+                <SmallMovieCard movie={shortestMovie} onClick={onMovieClick} />
+                <p style={{ paddingTop: "1rem" }}>{shortestMovie.runtime} min</p>
               </div>
-
+            )}
+            {longestMovie && (
               <div className="stat-card">
-                <h3>Longest Runtime</h3>
-                <div className="movie-card small" key={longestMovie.slug}>
-                  <div className="poster-container">
-                    <img
-                      src={longestMovie.poster_url}
-                      alt={longestMovie.title}
-                      className="movie-poster"
-                    />
-                  </div>
-                  <div className="movie-title">
-                    <strong>{longestMovie.title}</strong> ({longestMovie.year})
-                    <br />
-                  </div>
-                </div>
-                <p style={{ paddingTop: "1rem" }}>
-                  {longestMovie.runtime} minutes
-                </p>
+                <h3>Longest</h3>
+                <SmallMovieCard movie={longestMovie} onClick={onMovieClick} />
+                <p style={{ paddingTop: "1rem" }}>{longestMovie.runtime} min</p>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          {/* Spacer between sections */}
           <div style={{ height: "2rem" }} />
-          {oldestMovie && newestMovie && (
-            <div className="stat-cards">
+          <div className="stat-cards">
+            {oldestMovie && (
               <div className="stat-card">
-                <h3>Oldest Movie</h3>
-                <div className="movie-card small" key={oldestMovie.slug}>
-                  <div className="poster-container">
-                    <img
-                      src={oldestMovie.poster_url}
-                      alt={oldestMovie.title}
-                      className="movie-poster"
-                    />
-                  </div>
-                  <div className="movie-title">
-                    <strong>{oldestMovie.title}</strong> ({oldestMovie.year})
-                    <br />
-                  </div>
-                </div>
+                <h3>Oldest</h3>
+                <SmallMovieCard movie={oldestMovie} onClick={onMovieClick} />
               </div>
-
+            )}
+            {newestMovie && (
               <div className="stat-card">
-                <h3>Newest Movie</h3>
-                <div className="movie-card small" key={newestMovie.slug}>
-                  <div className="poster-container">
-                    <img
-                      src={newestMovie.poster_url}
-                      alt={newestMovie.title}
-                      className="movie-poster"
-                    />
-                  </div>
-                  <div className="movie-title">
-                    <strong>{newestMovie.title}</strong> ({newestMovie.year})
-                    <br />
-                  </div>
-                </div>
+                <h3>Newest</h3>
+                <SmallMovieCard movie={newestMovie} onClick={onMovieClick} />
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
+/* ================= MAIN APP ================= */
+
 function App() {
   const [data, setData] = useState<Movie[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
   useEffect(() => {
     async function fetch_data() {
       try {
         const res = await fetch("/api/data");
-        if (!res.ok) {
-          throw new Error(`HTTP error ${res.status}`);
-        }
-
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         const json: Movie[] = await res.json();
         setData(json);
       } catch (err) {
@@ -498,29 +344,21 @@ function App() {
     <>
       <nav className="navbar">
         <ul className="nav-links">
-          <li>
-            <Link to="/" className="nav-link">
-              Movies
-            </Link>
-          </li>
-          <li>
-            <Link to="/members" className="nav-link">
-              Members
-            </Link>
-          </li>
-          <li>
-            <Link to="/club" className="nav-link">
-              Club
-            </Link>
-          </li>
+          <li><Link to="/" className="nav-link">Movies</Link></li>
+          <li><Link to="/members" className="nav-link">Members</Link></li>
+          <li><Link to="/club" className="nav-link">Club</Link></li>
         </ul>
       </nav>
 
       <Routes>
-        <Route path="/" element={<MovieList data={data} />} />
-        <Route path="/members" element={<MembersPage data={data} />} />
-        <Route path="/club" element={<ClubPage data={data} />} />
+        <Route path="/" element={<MovieList data={data} onMovieClick={setSelectedMovie} />} />
+        <Route path="/members" element={<MembersPage data={data} onMovieClick={setSelectedMovie} />} />
+        <Route path="/club" element={<ClubPage data={data} onMovieClick={setSelectedMovie} />} />
       </Routes>
+
+      {selectedMovie && (
+        <MovieModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
+      )}
     </>
   );
 }
