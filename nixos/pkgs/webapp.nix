@@ -9,7 +9,7 @@ pkgs.buildNpmPackage (finalAttrs: {
   pname = "movie-club-webapp";
   version = "0.1.0";
 
-  npmDepsHash = "sha256-wWVE6Gn3kiG+RRPefAe02KXvzru5R5vKNnaEP4o2qlw=";
+  npmDepsHash = "sha256-S92RrxcRL8vf4eJ0U0Rl+V7lDLOUMrQ2CMbSsxFaSj0=";
 
   installPhase = ''
     mkdir -p $out/{bin,lib}
