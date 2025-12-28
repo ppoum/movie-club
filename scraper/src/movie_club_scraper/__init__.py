@@ -90,7 +90,7 @@ def start(
     list_slug: str,
     club_users: List[str],
     top_actor_count: int,
-    output_path: str,
+    output_dir: str,
 ):
     slugs = get_list_slugs(list_owner, list_slug)
     logger.info(f"Found {len(slugs)} movie slugs in list")
@@ -126,7 +126,8 @@ def start(
         movie_info.club_ratings = ratings
 
     output_format = [asdict(m) for m in movies_info]
-    with open(output_path, "w") as f:
+    output_file = os.path.join(output_dir, "stats.json")
+    with open(output_file, "w") as f:
         f.write(json.dumps(output_format))
 
 
@@ -145,7 +146,10 @@ def main():
     list_owner = get_env_var("LIST_OWNER")
     list_slug = get_env_var("LIST_SLUG")
     club_users = get_env_var("CLUB_USERS").split(",")
-    output_path = get_env_var("OUTPUT_PATH")
+    output_dir = get_env_var("OUTPUT_DIRECTORY", default="")
+    if output_dir == "":
+        # Fallback to RUNTIME_DIRECTORY
+        output_dir = get_env_var("RUNTIME_DIRECTORY", default="")
 
     try:
         top_actor_count = int(get_env_var("TOP_ACTOR_COUNT", default="4"))
@@ -153,7 +157,8 @@ def main():
         logger.fatal("Invalid TOP_ACTOR_COUNT value")
         sys.exit(1)
 
-    start(list_owner, list_slug, club_users, top_actor_count, output_path)
+    start(list_owner, list_slug, club_users, top_actor_count, output_dir)
+
 
 if __name__ == "__main__":
     main()
