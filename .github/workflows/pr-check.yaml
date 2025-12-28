@@ -1,7 +1,5 @@
 name: Check PR on main
-on:
-  pull_request:
-    types: [opened, synchronize, reopened, closed]
+on: pull_request
 jobs:
   build:
     runs-on: ubuntu-latest
