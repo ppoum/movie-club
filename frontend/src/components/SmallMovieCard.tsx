@@ -1,4 +1,5 @@
 import type { Movie } from "../types/ApiTypes";
+import "./SmallMovieCard.css";
 
 export default function SmallMovieCard({
   movie,

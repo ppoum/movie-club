@@ -1,4 +1,5 @@
 import { getAverageClubRating, type Movie } from "../types/ApiTypes";
+import "./MovieCard.css";
 
 export default function MovieCard({
   movie,
