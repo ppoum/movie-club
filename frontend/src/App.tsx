@@ -1,8 +1,6 @@
 import { Routes, Route, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import "./App.css";
-import "./clubPage.css";
-import "./membersPage.css";
 import MembersPage from "./routes/MembersPage";
 import { getAverageClubRating, type Movie } from "./types/ApiTypes";
 import ClubPage from "./routes/ClubPage";

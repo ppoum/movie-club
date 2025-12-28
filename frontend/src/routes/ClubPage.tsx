@@ -10,6 +10,7 @@ import {
   GetTotalRuntime,
   type Movie,
 } from "../types/ApiTypes";
+import "./ClubPage.css";
 
 export default function ClubPage({
   data,

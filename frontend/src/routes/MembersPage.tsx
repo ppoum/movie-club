@@ -6,6 +6,7 @@ import {
   starify,
   type Movie,
 } from "../types/ApiTypes";
+import "./MembersPage.css";
 
 export default function MembersPage({
   data,
