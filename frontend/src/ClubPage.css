@@ -1,0 +1,105 @@
+.club-page {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.club-banner {
+  background-color: #333;
+  color: #2f2f2f;
+  text-align: center;
+  padding: 40px 20px;
+  margin-bottom: 30px;
+  border-radius: 8px;
+}
+
+.club-banner h1 {
+  margin: 0;
+  font-size: 2.5rem;
+}
+
+.club-banner p {
+  margin: 10px 0 0;
+  font-size: 1.2rem;
+}
+
+.club-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.stat-section {
+  background-color: #2f2f2f;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.stat-section h2 {
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+}
+
+.podium {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 20px;
+}
+
+.podium-item {
+  text-align: center;
+  padding: 10px;
+  border-radius: 8px;
+  width: 100%;
+  background-color: #2f2f2f;
+  position: relative;
+}
+
+.podium-item.first {
+  background-color: gold;
+  height: 150px;
+}
+
+.podium-item.second {
+  background-color: silver;
+  height: 120px;
+}
+
+.podium-item.third {
+  background-color: #cd7f32;
+  height: 100px;
+}
+
+.podium-rank {
+  font-size: 2rem;
+  font-weight: bold;
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.stat-card {
+  background-color: #242424;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.stat-cards {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+.stat-card h3 {
+  margin: 0 0 10px;
+  font-size: 1.2rem;
+}
+
+.stat-card p {
+  margin: 0;
+  font-size: 1rem;
+}

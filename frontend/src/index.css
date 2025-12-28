@@ -54,6 +54,37 @@
   margin: 0.5em 0 0.2em 0;
 }
 
+.movie-card.small {
+  width: 150px;
+  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.movie-card.small .poster-container {
+  width: 150px;
+  height: 225px;
+  margin: 0 auto;
+}
+
+.movie-card.small .movie-poster {
+  width: 100%;
+  height: 100%;
+}
+
+.movie-card.small .movie-title {
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.movie-card.small .movie-rating {
+  font-size: 0.8rem;
+  text-align: center;
+}
+
 a {
   font-weight: 500;
   color: #646cff;

@@ -1,0 +1,71 @@
+.members-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem; /* space between members */
+}
+
+.member-section {
+  background-color: #2f2f2f;
+  padding: 20px;
+  padding-top: 1px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  margin-top: 10px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.member-section h2 {
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+}
+
+.member-card {
+  background-color: #242424;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.member-cards {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  width: 100%;
+}
+
+.member-card h3 {
+  margin: 0 0 10px;
+  font-size: 1.2rem;
+}
+
+.member-card p {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.member-average {
+  margin-top: 1rem;
+  padding: 0.5rem;
+  height: 100%;
+  width: 94%;
+  max-width: 440px;
+  text-align: center;
+  background-color: #242424;
+  border-radius: 6px;
+}
+
+.member-average h3 {
+  margin: 0 0 10px;
+  font-size: 1.2rem;
+  padding-bottom: 0px;
+  margin-bottom: 0px;
+}
+
+.member-average p {
+  margin: 0;
+  font-size: 1rem;
+}
