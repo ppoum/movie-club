@@ -43,17 +43,12 @@
 
       in
       {
-        # packages.movie-club.scraper = import ./nixos/pkgs/scraper.nix { };
         packages.movie-club = import ./nixos/pkgs {
           inherit pkgs;
           inherit pyproject-nix;
           inherit uv2nix;
           inherit pyproject-build-systems;
         };
-        # packages.movie-club = pkgs.callPackage ./nixos/pkgs { inherit pyproject-build-systems; };
-        # packages.movie-club = {
-        #   inherit scraper;
-        # };
       }
     ))
     // {

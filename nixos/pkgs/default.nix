@@ -10,4 +10,6 @@
     inherit pyproject-nix;
     inherit uv2nix;
   };
+
+  webapp = pkgs.callPackage ./webapp.nix { };
 }
