@@ -1,8 +1,8 @@
 flake:
 {
   config,
-  pkgs,
   lib,
+  pkgs,
   ...
 }:
 let
@@ -15,6 +15,7 @@ in
     package = lib.mkOption {
       type = lib.types.package;
       default = flake.packages.${pkgs.system}.movie-club.scraper;
+      # default = pkgs.internal.movie-club.scraper;
       description = "Movie club scraper package to run";
     };
 
@@ -42,7 +43,7 @@ in
       default = 4;
     };
 
-    output_path = lib.mkOption {
+    output_dir = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
       default = null;
     };
@@ -51,17 +52,30 @@ in
       type = lib.types.str;
       default = "INFO";
     };
+
   };
 
-  config = lib.mkIf config.services.movie-club.scraper.enable {
+  config = lib.mkIf cfg.enable {
+    # Create user
+    users.users.movie-club-scraper = {
+      isSystemUser = true;
+      description = "Movie club scraper service user";
+      group = "movie-club";
+      createHome = false;
+    };
+    users.groups.movie-club = { };
+
+    # Create output directory
+
     systemd.services.movie-club-scraper = {
       description = "Movie club statistics scraper";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
       serviceConfig = {
-        DynamicUser = true;
-        RuntimeDirectory = "movie-club-scraper";
+        User = "movie-club-scraper";
+        Group = "movie-club";
         Type = "oneshot";
+        StateDirectory = "movie-club";
         ExecStart = "${lib.getExe cfg.package}";
       };
       environment = {
@@ -72,9 +86,11 @@ in
         LOGLEVEL = config.services.movie-club.scraper.loglevel;
       }
       // (
-        # Only define envvar if option is set
-        if config.services.movie-club.scraper.output_path != null then
-          { OUTPUT_PATH = config.services.movie-club.scraper.output_path; }
+        # Only define envvar if optin is set
+        if config.services.movie-club.scraper.output_dir != null then
+          {
+            OUTPUT_DIRECTORY = config.services.movie-club.scraper.output_dir;
+          }
         else
           { }
       );

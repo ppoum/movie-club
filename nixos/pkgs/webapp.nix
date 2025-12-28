@@ -22,4 +22,5 @@ pkgs.buildNpmPackage (finalAttrs: {
     EOF
     chmod +x $out/bin/movie-club-webapp
   '';
+  meta.mainProgram = "movie-club-webapp";
 })

@@ -36,15 +36,12 @@
     (flake-utils.lib.eachDefaultSystem (
       system:
       let
-
         pkgs = import nixpkgs {
           inherit system;
         };
-
       in
       {
-        packages.movie-club = import ./nixos/pkgs {
-          inherit pkgs;
+        packages.movie-club = pkgs.callPackage ./nixos/pkgs {
           inherit pyproject-nix;
           inherit uv2nix;
           inherit pyproject-build-systems;
@@ -52,6 +49,7 @@
       }
     ))
     // {
-      nixosModules.services = import ./nixos/modules/services.nix self;
+      nixosModules.services.scraper = import ./nixos/modules/scraper-service.nix self;
+      nixosModules.services.webapp = import ./nixos/modules/webapp-service.nix self;
     };
 }
