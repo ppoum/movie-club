@@ -1,0 +1,32 @@
+name: Check PR on main
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: cachix/install-nix-action@v31
+        with:
+          nix_path: nixpkgs=channel:25.11
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24.x"
+
+      - name: Install npm dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Check linting errors
+        working-directory: ./frontend
+        run: npm run lint
+
+      - name: Check formatting errors
+        working-directory: ./frontend
+        run: npm run check-format
+
+      - name: Check if nix scraper builds
+        run: nix build .#movie-club.scraper
+      - name: Check if nix webapp builds
+        run: nix build .#movie-club.webapp

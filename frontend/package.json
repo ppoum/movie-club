@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "concurrently \"vite --host\" \"node server/index.cts\"",
     "build": "tsc -b && vite build && node backend.esbuild.mjs",
-    "lint": "eslint . && prettier -w .",
+    "lint": "eslint .",
+    "check-format": "prettier --check .",
+    "format": "prettier -w .",
     "preview": "vite preview"
   },
   "dependencies": {
