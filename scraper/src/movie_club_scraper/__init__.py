@@ -129,6 +129,7 @@ def start(
     output_file = os.path.join(output_dir, "stats.json")
     with open(output_file, "w") as f:
         f.write(json.dumps(output_format))
+    logger.info(f"Stats written to {output_file}")
 
 
 def get_env_var(name: str, default: str | None = None) -> str:
@@ -148,8 +149,8 @@ def main():
     club_users = get_env_var("CLUB_USERS").split(",")
     output_dir = get_env_var("OUTPUT_DIRECTORY", default="")
     if output_dir == "":
-        # Fallback to RUNTIME_DIRECTORY
-        output_dir = get_env_var("RUNTIME_DIRECTORY", default="")
+        # Fallback to STATE_DIRECTORY
+        output_dir = get_env_var("STATE_DIRECTORY")
 
     try:
         top_actor_count = int(get_env_var("TOP_ACTOR_COUNT", default="4"))
