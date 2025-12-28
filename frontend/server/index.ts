@@ -4,8 +4,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const app = express();
-const PORT = 3000;
 
+const PORT = process.env.PORT || 3000;
 const DATA_FILE = process.env.DATA_FILE_PATH || "../stats.json";
 const DIST_DIR = process.env.FRONTEND_DIST_DIR || "../dist/";
 
