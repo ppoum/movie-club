@@ -1,11 +1,11 @@
 import * as esbuild from "esbuild";
 
 await esbuild.build({
-  entryPoints: ["server/index.ts"],
+  entryPoints: ["server/index.cts"],
   bundle: true,
   platform: "node",
   bundle: true,
   minify: true,
-  format: "esm",
+  format: "cjs",
   outdir: "./dist-backend/",
 });

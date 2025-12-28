@@ -1,7 +1,6 @@
-import express from "express";
-import fs from "fs/promises";
-import path from "path";
-import { fileURLToPath } from "url";
+const express = require("express");
+const fs = require("fs/promises");
+const path = require("path");
 
 const app = express();
 
@@ -25,8 +24,6 @@ app.get("/api/data", async (_req, res) => {
 });
 
 // Serve static app
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 const distPath = path.resolve(__dirname, DIST_DIR);
 app.use(express.static(distPath));
 
