@@ -7,7 +7,7 @@ export type Movie = {
   avg_rating: number;
   director: Director;
   top_actors: Actor[];
-  club_ratings: Record<string, number | null>;
+  club_ratings: Ratings;
 };
 
 export type Director = {
@@ -22,8 +22,13 @@ export type Actor = {
   role_name: string;
 };
 
+export type Ratings = Record<string, number | null>;
+
 /* ================= HELPERS ================= */
 
+/**
+ * Returns the average club rating for a movie, ignoring users with no ratings.
+ */
 export function getAverageClubRating(movie: Movie): number | null {
   const ratings = Object.values(movie.club_ratings).filter(
     (r): r is number => r !== null,
