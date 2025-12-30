@@ -10,13 +10,6 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-.movie-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
-  margin: 2rem 0;
-}
-
 .movie-title {
   white-space: normal;
   width: 100%;
