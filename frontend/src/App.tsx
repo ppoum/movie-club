@@ -30,6 +30,13 @@ function App() {
 
   if (error) return <p>Error: {error}</p>;
 
+  if (selectedMovie === null) {
+    // No modal, allow scroll
+    document.body.style.overflow = "unset";
+  } else {
+    document.body.style.overflow = "hidden";
+  }
+
   return (
     <>
       <nav className="navbar">

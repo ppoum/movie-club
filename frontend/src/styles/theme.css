@@ -1,0 +1,15 @@
+:root {
+  --bg-color: #242424;
+  --bg-color-secondary: #2f2f2f;
+
+  color: rgba(255, 255, 255, 0.95);
+  --font-color-light-gray: rgb(255, 255, 255, 0.65);
+  --font-color-gray-highlight: rgb(255, 255, 255, 0.8);
+  --star-gold-color: #ffd700;
+  --font-color-dark-blue: #3785fb;
+
+  --gradient-dark-blue: #2278fb;
+  --gradient-light-blue: #65ddd9;
+
+  background-color: var(--bg-color);
+}

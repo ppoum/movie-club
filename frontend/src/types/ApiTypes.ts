@@ -7,7 +7,7 @@ export type Movie = {
   avg_rating: number;
   director: Director;
   top_actors: Actor[];
-  club_ratings: Record<string, number | null>;
+  club_ratings: Ratings;
 };
 
 export type Director = {
@@ -22,8 +22,13 @@ export type Actor = {
   role_name: string;
 };
 
+export type Ratings = Record<string, number | null>;
+
 /* ================= HELPERS ================= */
 
+/**
+ * Returns the average club rating for a movie, ignoring users with no ratings.
+ */
 export function getAverageClubRating(movie: Movie): number | null {
   const ratings = Object.values(movie.club_ratings).filter(
     (r): r is number => r !== null,
@@ -146,9 +151,17 @@ export function getMovieBySlug(data: Movie[], slug: string): Movie | null {
   return data.find((m) => m.slug === slug) ?? null;
 }
 
+/**
+ * Converts a float value between 1 and 10 to a star notation
+ * (with the following characters: ★, ⯪ and ☆)
+ */
 export function starify(rating: number | null): string {
-  if (rating === null) return "N/A";
+  if (rating === null) rating = 0;
   const fullStars = Math.floor(rating / 2);
-  const halfStar = rating / 2 - fullStars >= 0.5 ? "½" : "";
-  return "★".repeat(fullStars) + halfStar;
+  const hasHalfStar = Math.round(rating) % 2 >= 1;
+  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+  let stars = "★".repeat(fullStars);
+  if (hasHalfStar) stars += "⯪";
+  stars += "☆".repeat(emptyStars);
+  return stars;
 }

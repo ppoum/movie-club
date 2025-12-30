@@ -1,5 +1,5 @@
 .movie-card {
-  background: #2f2f2f;
+  background: var(--bg-color-secondary);
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   padding: 1rem;
