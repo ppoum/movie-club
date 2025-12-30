@@ -5,7 +5,7 @@
 
 .club-banner {
   background-color: #333;
-  color: #2f2f2f;
+  color: var(--bg-color-secondary);
   text-align: center;
   padding: 40px 20px;
   margin-bottom: 30px;
@@ -29,7 +29,7 @@
 }
 
 .stat-section {
-  background-color: #2f2f2f;
+  background-color: var(--bg-color-secondary);
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -52,7 +52,7 @@
   padding: 10px;
   border-radius: 8px;
   width: 100%;
-  background-color: #2f2f2f;
+  background-color: var(--bg-color-secondary);
   position: relative;
 }
 
@@ -81,7 +81,7 @@
 }
 
 .stat-card {
-  background-color: #242424;
+  background-color: var(--bg-color);
   padding: 15px;
   border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);

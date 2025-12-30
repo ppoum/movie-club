@@ -1,0 +1,8 @@
+:root {
+  --bg-color: #242424;
+  --bg-color-secondary: #2f2f2f;
+
+  color: rgba(255, 255, 255, 0.9);
+
+  background-color: var(--bg-color);
+}
