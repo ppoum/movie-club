@@ -27,6 +27,8 @@
   border-radius: 15px;
   width: 90%;
   max-width: 900px;
+  max-height: 82vh;
+  overflow-y: auto;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
   animation: slideDown 0.4s ease;
   position: relative;
@@ -186,6 +188,7 @@
 }
 
 .modal-club-section {
+  padding-bottom: 1.5em;
 }
 
 .modal-club-section h3 {
