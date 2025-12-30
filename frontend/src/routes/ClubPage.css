@@ -3,25 +3,6 @@
   font-family: Arial, sans-serif;
 }
 
-.club-banner {
-  background-color: #333;
-  color: #2f2f2f;
-  text-align: center;
-  padding: 40px 20px;
-  margin-bottom: 30px;
-  border-radius: 8px;
-}
-
-.club-banner h1 {
-  margin: 0;
-  font-size: 2.5rem;
-}
-
-.club-banner p {
-  margin: 10px 0 0;
-  font-size: 1.2rem;
-}
-
 .club-stats {
   display: flex;
   flex-direction: column;
@@ -29,13 +10,14 @@
 }
 
 .stat-section {
-  background-color: #2f2f2f;
+  background-color: var(--bg-color-secondary);
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .stat-section h2 {
+  text-align: center;
   margin-bottom: 15px;
   font-size: 1.5rem;
 }
@@ -52,7 +34,7 @@
   padding: 10px;
   border-radius: 8px;
   width: 100%;
-  background-color: #2f2f2f;
+  background-color: var(--bg-color-secondary);
   position: relative;
 }
 
@@ -81,7 +63,7 @@
 }
 
 .stat-card {
-  background-color: #242424;
+  background-color: var(--bg-color);
   padding: 15px;
   border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);

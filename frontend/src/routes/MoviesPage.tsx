@@ -1,5 +1,6 @@
 import MovieCard from "../components/MovieCard";
 import type { Movie } from "../types/ApiTypes";
+import "./MoviesPage.css";
 
 export default function MoviesPage({
   data,
