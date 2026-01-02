@@ -1,7 +1,7 @@
 { pkgs }:
 let
   nodejs = pkgs.nodejs_24;
-  src = ../../frontend;
+  src = ../../webapp;
 in
 pkgs.buildNpmPackage (finalAttrs: {
   inherit nodejs;
@@ -9,7 +9,7 @@ pkgs.buildNpmPackage (finalAttrs: {
   pname = "movie-club-webapp";
   version = "0.1.0";
 
-  npmDepsHash = "sha256-S92RrxcRL8vf4eJ0U0Rl+V7lDLOUMrQ2CMbSsxFaSj0=";
+  npmDepsHash = "sha256-phZQBI+pCKWVTsPNk2HijqRW+8w3nS7T6cNEh5QCybQ=";
 
   installPhase = ''
     mkdir -p $out/{bin,lib}
