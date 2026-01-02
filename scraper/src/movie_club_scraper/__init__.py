@@ -122,7 +122,10 @@ def start(
 
     # Insert club ratings into movie info
     for movie_info in movies_info:
-        ratings = ratings_by_slugs[movie_info.slug]
+        # If slug key not in dict, then no user has rated the movie
+        ratings = ratings_by_slugs.setdefault(
+            movie_info.slug, empty_rating_default.copy()
+        )
         movie_info.club_ratings = ratings
 
     output_format = [asdict(m) for m in movies_info]
