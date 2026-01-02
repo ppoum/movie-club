@@ -13,15 +13,15 @@ jobs:
           node-version: "24.x"
 
       - name: Install npm dependencies
-        working-directory: ./frontend
+        working-directory: ./webapp
         run: npm ci
 
       - name: Check linting errors
-        working-directory: ./frontend
+        working-directory: ./webapp
         run: npm run lint
 
       - name: Check formatting errors
-        working-directory: ./frontend
+        working-directory: ./webapp
         run: npm run check-format
 
       - name: Check if nix scraper builds
