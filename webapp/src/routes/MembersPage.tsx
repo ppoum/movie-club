@@ -1,9 +1,9 @@
 import SmallMovieCard from "../components/SmallMovieCard";
+import StarRating from "../components/StarRating";
 import {
   getAverageMemberRating,
   GetMembersData,
   getMovieBySlug,
-  starify,
   type Movie,
 } from "../types/ApiTypes";
 import "./MembersPage.css";
@@ -39,9 +39,13 @@ export default function MembersPage({
                       movie={highestMovie}
                       onClick={onMovieClick}
                     />
-                    <p style={{ paddingTop: "1rem" }}>
-                      {starify(highestMovie.club_ratings[member.username])}
-                    </p>
+                    <div style={{ paddingTop: "15px" }}>
+                      <StarRating
+                        rating={highestMovie.club_ratings[member.username]}
+                        size={20}
+                        color="white"
+                      />
+                    </div>
                   </>
                 ) : (
                   <p>No highest rated movie yet</p>
@@ -55,9 +59,13 @@ export default function MembersPage({
                       movie={lowestMovie}
                       onClick={onMovieClick}
                     />
-                    <p style={{ paddingTop: "1rem" }}>
-                      {starify(lowestMovie.club_ratings[member.username])}
-                    </p>
+                    <div style={{ paddingTop: "15px" }}>
+                      <StarRating
+                        rating={lowestMovie.club_ratings[member.username]}
+                        size={20}
+                        color="white"
+                      />
+                    </div>
                   </>
                 ) : (
                   <p>No lowest rated movie yet</p>

@@ -1,5 +1,6 @@
-import { getAverageClubRating, starify, type Movie } from "../types/ApiTypes";
+import { getAverageClubRating, type Movie } from "../types/ApiTypes";
 import "./MovieModal.css";
+import StarRating from "./StarRating";
 
 export default function MovieModal({
   movie,
@@ -82,9 +83,7 @@ function RatingBox({ title, rating }: RatingBoxProps) {
       <div className="modal-ratings-highlight-box">
         <p className="modal-ratings-title">{title}</p>
         <div className="modal-ratings-values">
-          {rating !== null && (
-            <span className="modal-ratings-stars">{starify(rating * 2)}</span>
-          )}
+          {rating !== null && <StarRating rating={rating * 2} size={20} />}
           <span className="modal-ratings-number">
             {rating !== null ? rating.toFixed(2) : "N/A"}
           </span>
@@ -109,7 +108,7 @@ function ClubRatingBox({ name, rating }: ClubRatingBoxProps) {
   } else {
     score = (
       <div className="modal-club-rating-score">
-        <span className="modal-club-rating-stars">{starify(rating)}</span>
+        <StarRating rating={rating} size={15} />
         <span className="modal-club-rating-number">
           {(rating / 2).toFixed(1)}
         </span>
