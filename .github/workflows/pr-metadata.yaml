@@ -1,0 +1,27 @@
+name: Check PR on main
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+jobs:
+  pr-metadata-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify PR name
+        uses: nicklegan/github-pull-request-naming-policy-action@v1.0.0
+        with:
+          title-regex: "^(web|scraper|nix|chore): .*$"
+          title-error-message: "The PR title must contain a valid type prefix"
+          body-regex: "^.+$"
+          body-error-message: "PR description cannot be empty"
+      - name: Check that PR name contains a valid type prefix
+        run: |
+          if ! [[ "${{ github.event.pull_request.title }}" =~ ^(web|scraper|nix|chore):\ .*$ ]]; then
+            echo "Invalid pull request title"
+            exit 1
+          fi
+      - name: Check that PR description is non-empty
+        run: |
+          if [[ -z "${{ github.event.pull_request.body }}" ]]; then
+            echo "Pull request body is empty!"
+            exit 1
+          fi
