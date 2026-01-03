@@ -150,18 +150,3 @@ export function GetMembersData(data: Movie[]) {
 export function getMovieBySlug(data: Movie[], slug: string): Movie | null {
   return data.find((m) => m.slug === slug) ?? null;
 }
-
-/**
- * Converts a float value between 1 and 10 to a star notation
- * (with the following characters: ★, ⯪ and ☆)
- */
-export function starify(rating: number | null): string {
-  if (rating === null) rating = 0;
-  const fullStars = Math.floor(rating / 2);
-  const hasHalfStar = Math.round(rating) % 2 >= 1;
-  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-  let stars = "★".repeat(fullStars);
-  if (hasHalfStar) stars += "⯪";
-  stars += "☆".repeat(emptyStars);
-  return stars;
-}
