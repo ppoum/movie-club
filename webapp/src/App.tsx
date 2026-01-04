@@ -1,4 +1,10 @@
-import { Routes, Route, Link } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Link,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
 import { useEffect, useState } from "react";
 import "./App.css";
 import MembersPage from "./routes/MembersPage";
@@ -13,6 +19,11 @@ function App() {
   const [data, setData] = useState<Movie[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  // Set to true when the modal should set the URL hash, false when it shouldn't modify the URL
+  const [modalUsingHash, setModalUsingHash] = useState(false);
+
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     async function fetch_data() {
@@ -28,6 +39,25 @@ function App() {
     fetch_data();
   }, []);
 
+  // Update modal whenever the URL hash changes (or data refreshes)
+  useEffect(() => {
+    const slug = location.hash.substring(1); // Strip leading # from hash
+    if (slug) {
+      // Slug provided, try to find the movie it refers to in `data`
+      const movie = data.find((m) => m.slug === slug);
+      if (movie !== undefined) {
+        setSelectedMovie(movie);
+      } else {
+        // No movie with that slug in data, clear
+        setSelectedMovie(null);
+      }
+    } else {
+      // No slug, clear the selected movie
+      setSelectedMovie(null);
+      setModalUsingHash(false);
+    }
+  }, [location.hash, data]);
+
   if (error) return <p>Error: {error}</p>;
 
   if (selectedMovie === null) {
@@ -35,6 +65,27 @@ function App() {
     document.body.style.overflow = "unset";
   } else {
     document.body.style.overflow = "hidden";
+  }
+
+  function openModal(movie: Movie, useHash: boolean) {
+    if (!useHash) {
+      // Don't set URL hash
+      setModalUsingHash(false);
+      setSelectedMovie(movie);
+      return;
+    }
+
+    console.log("Setting var to true");
+    setModalUsingHash(true);
+    navigate(`#${movie.slug}`, { replace: true });
+  }
+
+  function closeModal() {
+    if (modalUsingHash) {
+      navigate("", { replace: true });
+    } else {
+      setSelectedMovie(null);
+    }
   }
 
   return (
@@ -62,23 +113,29 @@ function App() {
       <Routes>
         <Route
           path="/"
-          element={<MoviesPage data={data} onMovieClick={setSelectedMovie} />}
+          element={
+            <MoviesPage data={data} onMovieClick={(m) => openModal(m, true)} />
+          }
         />
         <Route
           path="/members"
-          element={<MembersPage data={data} onMovieClick={setSelectedMovie} />}
+          element={
+            <MembersPage
+              data={data}
+              onMovieClick={(m) => openModal(m, false)}
+            />
+          }
         />
         <Route
           path="/club"
-          element={<ClubPage data={data} onMovieClick={setSelectedMovie} />}
+          element={
+            <ClubPage data={data} onMovieClick={(m) => openModal(m, false)} />
+          }
         />
       </Routes>
 
       {selectedMovie && (
-        <MovieModal
-          movie={selectedMovie}
-          onClose={() => setSelectedMovie(null)}
-        />
+        <MovieModal movie={selectedMovie} onClose={closeModal} />
       )}
     </>
   );

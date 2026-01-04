@@ -6,13 +6,6 @@ jobs:
   pr-metadata-check:
     runs-on: ubuntu-latest
     steps:
-      - name: Verify PR name
-        uses: nicklegan/github-pull-request-naming-policy-action@v1.0.0
-        with:
-          title-regex: "^(web|scraper|nix|chore): .*$"
-          title-error-message: "The PR title must contain a valid type prefix"
-          body-regex: "^.+$"
-          body-error-message: "PR description cannot be empty"
       - name: Check that PR name contains a valid type prefix
         run: |
           if ! [[ "${{ github.event.pull_request.title }}" =~ ^(web|scraper|nix|chore):\ .*$ ]]; then
