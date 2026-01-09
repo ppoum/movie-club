@@ -12,6 +12,8 @@ use tracing_subscriber::EnvFilter;
 
 mod api;
 
+const FRONTEND_DIST_DIR: &str = env!("FRONTEND_DIST_DIR");
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Setup tracing with envvar, default to warn
@@ -61,8 +63,8 @@ impl AppState {
             .unwrap_or("../stats.json".into())
             .into();
 
-        let frontend_dist_path: PathBuf = std::env::var("FRONTEND_DIST_DIR")
-            .unwrap_or("../dist/".into())
+        let frontend_dist_path: PathBuf = std::env::var("FRONTEND_DIST_DIR_OVERRIDE")
+            .unwrap_or(FRONTEND_DIST_DIR.into())
             .into();
 
         Self {
