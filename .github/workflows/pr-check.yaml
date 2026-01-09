@@ -25,6 +25,6 @@ jobs:
         run: npm run check-format
 
       - name: Check if nix scraper builds
-        run: nix build .#movie-club.scraper
+        run: nix build .#movie-club-scraper
       - name: Check if nix webapp builds
-        run: nix build .#movie-club.webapp
+        run: nix build .#movie-club-webapp

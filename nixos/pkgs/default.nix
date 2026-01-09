@@ -5,11 +5,13 @@
   pyproject-build-systems,
 }:
 {
-  scraper = pkgs.callPackage ./scraper.nix {
-    inherit pyproject-build-systems;
-    inherit pyproject-nix;
-    inherit uv2nix;
+  movie-club-scraper = pkgs.callPackage ./scraper.nix {
+    inherit
+      pyproject-build-systems
+      pyproject-nix
+      uv2nix
+      ;
   };
 
-  webapp = pkgs.callPackage ./webapp.nix { };
+  movie-club-webapp = pkgs.callPackage ./webapp.nix { };
 }
