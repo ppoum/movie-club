@@ -1,9 +1,7 @@
-# Movie Club Webapp
+# Movie Club Frontend
 
-The webapp project contains:
-
-- A responsive UI presenting the movie club statistics.
-- A simple backend serving the API endpoints for the project.
+The frontend project consists of a responsive React application that
+communicates with the backend to display the movie club stats.
 
 ## Development
 
