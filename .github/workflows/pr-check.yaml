@@ -24,6 +24,13 @@ jobs:
         working-directory: ./frontend
         run: npm run check-format
 
+      - name: Check formatting
+        working-directory: backend
+        run: cargo fmt --check
+      - name: Compile Rust backend
+        working-directory: backend
+        run: cargo build --release
+
       - name: Check if nix scraper builds
         run: nix build .#movie-club-scraper
       - name: Check if nix webapp builds
