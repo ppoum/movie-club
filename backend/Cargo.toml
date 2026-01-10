@@ -5,9 +5,18 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.100"
-axum = "0.8.8"
+argon2 = "0.5.3"
+atomic-write-file = { version = "0.3.0", features = ["unnamed-tmpfile"] }
+axum = { version = "0.8.8", features = ["macros"] }
+axum-extra = { version = "0.12.5", features = ["cookie"] }
 log = "0.4.29"
+rand = "0.9.2"
+# Only needed as a dependency for argon2 salt generation
+#  - Some refactoring on their side means the getrandom feature isn't enabled and they won't fix it on their side
+rand_core = { version = "0.6.4", features = ["getrandom"] }
+serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
+thiserror = "2.0.17"
 tokio = { version = "1.49.0", features = ["fs", "macros", "rt-multi-thread"] }
 tower-http = { version = "0.6.8", features = ["fs", "trace"] }
 tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
