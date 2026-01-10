@@ -9,7 +9,7 @@ import {
   getTop3Movies,
   GetTotalRuntime,
   type Movie,
-} from "../types/ApiTypes";
+} from "../types/DataTypes.ts";
 import "./ClubPage.css";
 
 export default function ClubPage({

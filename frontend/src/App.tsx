@@ -8,7 +8,7 @@ import {
 import { useEffect, useState } from "react";
 import "./App.css";
 import MembersPage from "./routes/MembersPage";
-import { type Movie } from "./types/ApiTypes";
+import { type Movie } from "./types/DataTypes";
 import ClubPage from "./routes/ClubPage";
 import MoviesPage from "./routes/MoviesPage";
 import MovieModal from "./components/MovieModal";
