@@ -75,7 +75,6 @@ function App() {
       return;
     }
 
-    console.log("Setting var to true");
     setModalUsingHash(true);
     navigate(`#${movie.slug}`, { replace: true });
   }
