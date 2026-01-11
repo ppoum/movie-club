@@ -12,6 +12,7 @@ import { type Movie } from "./types/DataTypes";
 import ClubPage from "./routes/ClubPage";
 import MoviesPage from "./routes/MoviesPage";
 import MovieModal from "./components/MovieModal";
+import AdminPage from "./routes/admin/AdminPage";
 
 /* ================= MAIN APP ================= */
 
@@ -89,25 +90,27 @@ function App() {
 
   return (
     <>
-      <nav className="navbar">
-        <ul className="nav-links">
-          <li>
-            <Link to="/" className="nav-link">
-              Movies
-            </Link>
-          </li>
-          <li>
-            <Link to="/members" className="nav-link">
-              Members
-            </Link>
-          </li>
-          <li>
-            <Link to="/club" className="nav-link">
-              Club
-            </Link>
-          </li>
-        </ul>
-      </nav>
+      {!location.pathname.startsWith("/admin") && (
+        <nav className="navbar">
+          <ul className="nav-links">
+            <li>
+              <Link to="/" className="nav-link">
+                Movies
+              </Link>
+            </li>
+            <li>
+              <Link to="/members" className="nav-link">
+                Members
+              </Link>
+            </li>
+            <li>
+              <Link to="/club" className="nav-link">
+                Club
+              </Link>
+            </li>
+          </ul>
+        </nav>
+      )}
 
       <Routes>
         <Route
@@ -131,6 +134,7 @@ function App() {
             <ClubPage data={data} onMovieClick={(m) => openModal(m, false)} />
           }
         />
+        <Route path="/admin/*" element={<AdminPage />}></Route>
       </Routes>
 
       {selectedMovie && (

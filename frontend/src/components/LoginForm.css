@@ -1,0 +1,180 @@
+.login-card {
+  background: var(--bg-color-secondary);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  padding: 1.5em;
+  border-radius: 12px;
+  min-width: 480px;
+}
+
+@media (max-width: 600px) {
+  /* On mobile, don't set min-width */
+  .login-card {
+    min-width: 0;
+  }
+}
+
+.login-card-header {
+  text-align: center;
+}
+
+.login-card-header h1 {
+  margin: 0.2em;
+}
+.login-card-header p {
+  margin-top: 0;
+  color: var(--font-color-light-gray);
+}
+
+.login-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  margin-top: 1.2em;
+}
+
+.login-card-option {
+  background: var(--bg-color);
+  border-radius: 15px;
+  transition: max-height 0.3s ease;
+  overflow: hidden;
+}
+
+.login-card-option-header {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  padding: 1em;
+  cursor: pointer;
+  transition:
+    padding 0.1s ease-in-out,
+    background 0.2s ease;
+}
+
+.login-card-option-header:hover {
+  background: var(--color-light-highlight);
+}
+
+/* When option is active, then never highlight the header*/
+.login-card-option.active .login-card-option-header:hover {
+  background: none;
+}
+
+/* When option is active, remove the bottom padding as it makes it easy to accidentally close the option*/
+.login-card-option.active .login-card-option-header {
+  padding-bottom: 0;
+}
+
+.login-card-option-icon {
+  display: flex;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  color: var(--gradient-light-blue);
+  background: var(--gradient-dark-blue);
+  border-radius: 10px;
+}
+
+.login-card-option-label {
+  flex: 1;
+}
+.login-card-option-label h3 {
+  margin: 0;
+}
+
+.login-card-option-toggle {
+  border: solid var(--color-gray);
+  border-width: 0 0.2em 0.2em 0;
+  padding: 0.2em;
+  transform: rotate(-135deg);
+  transform-origin: 60% 60%;
+  transition: transform 0.3s ease;
+}
+
+/* If option is active, then rotate down */
+.login-card-option.active .login-card-option-toggle {
+  transform: rotate(45deg);
+}
+
+.login-card-option-form {
+  display: grid;
+  grid-template-rows: 0fr;
+  overflow: hidden;
+  padding: 0 1em;
+  transition:
+    grid-template-rows 0.35s ease-in-out,
+    padding 0.1s ease-in-out;
+}
+
+/* If option is active, then don't hide */
+.login-card-option.active .login-card-option-form {
+  padding: 1em;
+  grid-template-rows: 1fr;
+}
+.login-card-option-form > * {
+  overflow: hidden;
+}
+
+.login-card-option-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+}
+
+.login-card-option-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+.login-card-option-form-group label {
+  font-weight: 600;
+}
+
+.login-card-option-form-group input {
+  border-radius: 10px;
+  padding: 0.75em 1em;
+  background: var(--bg-color);
+  border: 1px solid var(--color-dark-gray);
+  font-size: 0.85em;
+  transition: all 0.3s ease;
+}
+.login-card-option-form-group input:focus {
+  outline: none;
+  border-color: var(--gradient-dark-blue);
+}
+.login-card-option.error .login-card-option-form-group input {
+  border-color: red;
+}
+.login-card-option.error .login-card-option-form-group input::placeholder {
+  color: var(--color-dark-red);
+}
+
+.login-card-option-form-login-button {
+  border: none;
+  padding: 0.85em;
+  margin-top: 0.5em;
+  border-radius: 10px;
+  background: linear-gradient(
+    135deg,
+    var(--gradient-dark-blue) 0%,
+    var(--gradient-light-blue) 100%
+  );
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.login-card-option-form-login-button:hover {
+  transform: translateY(-2px);
+}
+
+.login-card-option-form-login-button:active {
+  transform: translateY(0);
+}
+
+.login-card-option-form-error-message {
+  margin: 0;
+  font-style: italic;
+  color: var(--color-dark-red);
+}
