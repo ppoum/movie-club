@@ -5,13 +5,11 @@ use serde_json::json;
 
 use crate::AppState;
 
-pub mod admin;
 pub mod auth;
 
 pub fn routes() -> Router<Arc<AppState>> {
     Router::new()
         .route("/data", get(get_data))
-        .nest("/admin", admin::routes())
         .nest("/auth", auth::routes())
         .fallback(api_fallback)
 }
