@@ -22,6 +22,11 @@
         nixpkgs.follows = "nixpkgs";
       };
     };
+
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -32,19 +37,24 @@
       pyproject-nix,
       uv2nix,
       pyproject-build-systems,
+      rust-overlay,
     }:
     (flake-utils.lib.eachDefaultSystem (
       system:
       let
+        overlays = [ (import rust-overlay) ];
         pkgs = import nixpkgs {
-          inherit system;
+          inherit system overlays;
         };
       in
       {
-        packages.movie-club = pkgs.callPackage ./nixos/pkgs {
-          inherit pyproject-nix;
-          inherit uv2nix;
-          inherit pyproject-build-systems;
+        packages = import ./nixos/pkgs {
+          inherit
+            pkgs
+            pyproject-nix
+            uv2nix
+            pyproject-build-systems
+            ;
         };
       }
     ))

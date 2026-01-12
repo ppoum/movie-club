@@ -1,0 +1,13 @@
+[package]
+name = "backend"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.100"
+axum = "0.8.8"
+log = "0.4.29"
+serde_json = "1.0.149"
+tokio = { version = "1.49.0", features = ["fs", "macros", "rt-multi-thread"] }
+tower-http = { version = "0.6.8", features = ["fs", "trace"] }
+tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }

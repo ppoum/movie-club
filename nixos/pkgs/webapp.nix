@@ -1,26 +1,43 @@
 { pkgs }:
 let
   nodejs = pkgs.nodejs_24;
-  src = ../../webapp;
+  rustPlatform = pkgs.makeRustPlatform {
+    cargo = pkgs.rust-bin.stable."1.92.0".default;
+    rustc = pkgs.rust-bin.stable."1.92.0".default;
+  };
+
+  frontendSrc = ../../frontend;
+  backendSrc = ../../backend;
+
+  node-frontend = pkgs.buildNpmPackage (finalAttrs: {
+    inherit nodejs;
+    pname = "movie-club-frontend";
+    version = "0.1.0";
+    src = frontendSrc;
+
+    npmDepsHash = "sha256-r81wRtiexPET6IE73oQoUK+wDcPOdrFFajH6WXal1KM=";
+
+    installPhase = ''
+      cp -r dist $out/
+    '';
+  });
 in
-pkgs.buildNpmPackage (finalAttrs: {
-  inherit nodejs;
-  inherit src;
-  pname = "movie-club-webapp";
+rustPlatform.buildRustPackage (finalAttrs: {
+  pname = "movie-club-backend";
   version = "0.1.0";
+  src = backendSrc;
 
-  npmDepsHash = "sha256-phZQBI+pCKWVTsPNk2HijqRW+8w3nS7T6cNEh5QCybQ=";
+  # Environment variable
+  FRONTEND_DIST_DIR = node-frontend;
 
-  installPhase = ''
-    mkdir -p $out/{bin,lib}
-    cp -r dist dist-backend $out/lib
-    cat >$out/bin/movie-club-webapp <<EOF
-    #!${pkgs.runtimeShell}
-    export NODE_ENV=production
-    export DIST_DIR=$out/lib/dist/
-    exec ${nodejs}/bin/node $out/lib/dist-backend/index.js
-    EOF
-    chmod +x $out/bin/movie-club-webapp
+  buildInputs = [ node-frontend ];
+
+  cargoHash = "sha256-94JfGWxIJD8Gcyqpl4JJNg7sNZeddrVUY7vY0Ep9hDc=";
+
+  postInstall = ''
+    # Rename binary
+    mv $out/bin/backend $out/bin/movie-club-webapp
   '';
+
   meta.mainProgram = "movie-club-webapp";
 })

@@ -14,8 +14,7 @@ in
 
     package = lib.mkOption {
       type = lib.types.package;
-      default = flake.packages.${pkgs.system}.movie-club.scraper;
-      # default = pkgs.internal.movie-club.scraper;
+      default = flake.packages.${pkgs.system}.movie-club-scraper;
       description = "Movie club scraper package to run";
     };
 

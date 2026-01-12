@@ -13,18 +13,25 @@ jobs:
           node-version: "24.x"
 
       - name: Install npm dependencies
-        working-directory: ./webapp
+        working-directory: ./frontend
         run: npm ci
 
       - name: Check linting errors
-        working-directory: ./webapp
+        working-directory: ./frontend
         run: npm run lint
 
       - name: Check formatting errors
-        working-directory: ./webapp
+        working-directory: ./frontend
         run: npm run check-format
 
+      - name: Check formatting
+        working-directory: backend
+        run: cargo fmt --check
+      - name: Compile Rust backend
+        working-directory: backend
+        run: cargo build --release
+
       - name: Check if nix scraper builds
-        run: nix build .#movie-club.scraper
+        run: nix build .#movie-club-scraper
       - name: Check if nix webapp builds
-        run: nix build .#movie-club.webapp
+        run: nix build .#movie-club-webapp
