@@ -1,16 +1,24 @@
-use std::{path::PathBuf, sync::Arc};
+use std::{
+    path::PathBuf,
+    sync::{Arc, RwLock},
+};
 
 use anyhow::Context;
-use axum::{Json, Router, http::StatusCode, response::IntoResponse};
+use axum::Router;
 use log::info;
-use serde_json::json;
 use tower_http::{
     services::{ServeDir, ServeFile},
     trace::TraceLayer,
 };
 use tracing_subscriber::EnvFilter;
 
+use crate::{
+    api::auth::{AuthState, Sessions},
+    repository::{StateRepository, StateRepositoryError},
+};
+
 mod api;
+mod repository;
 
 const FRONTEND_DIST_DIR: &str = env!("FRONTEND_DIST_DIR");
 
@@ -25,7 +33,7 @@ async fn main() -> anyhow::Result<()> {
         )
         .init();
 
-    let shared_state = Arc::new(AppState::new());
+    let shared_state = Arc::new(AppState::new()?);
 
     // When accessing an unknown route, then fallback to serving the frontend from the dist directory.
     let fallback_service = {
@@ -37,8 +45,8 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .nest("/api", api::routes())
         .fallback_service(fallback_service)
-        .with_state(shared_state)
-        .layer(TraceLayer::new_for_http());
+        .layer(TraceLayer::new_for_http())
+        .with_state(shared_state);
 
     // Get port from environment, default to 3000
     let port = std::env::var("PORT").unwrap_or("3000".into());
@@ -53,12 +61,16 @@ async fn main() -> anyhow::Result<()> {
 }
 
 struct AppState {
+    // TODO: Do we actually need these paths in the state?
     pub data_path: PathBuf,
     pub frontend_dist_path: PathBuf,
+
+    pub sessions: Arc<RwLock<Sessions>>,
+    pub auth_state: Arc<RwLock<StateRepository<AuthState>>>,
 }
 
 impl AppState {
-    pub fn new() -> Self {
+    pub fn new() -> anyhow::Result<Self> {
         let data_path: PathBuf = std::env::var("DATA_FILE_PATH")
             .unwrap_or("../stats.json".into())
             .into();
@@ -67,31 +79,33 @@ impl AppState {
             .unwrap_or(FRONTEND_DIST_DIR.into())
             .into();
 
-        Self {
+        let state_dir: PathBuf = std::env::var("STATE_PATH")
+            .unwrap_or("./state/".into())
+            .into();
+
+        let auth_state = {
+            let file_path = state_dir.join("auth.json");
+
+            let repo = match StateRepository::try_from_file(file_path.clone()) {
+                Ok(r) => r,
+                Err(StateRepositoryError::FileNotFound(p)) => {
+                    log::warn!(
+                        "Auth state at {p:?} does not exist, attempting to create default file"
+                    );
+                    StateRepository::new_save_default(file_path)
+                        .context("Failed to create and save default auth state file")?
+                }
+                Err(e) => return Err(e).context("Unable to load auth state file"),
+            };
+
+            Arc::new(RwLock::new(repo))
+        };
+
+        Ok(Self {
             data_path,
             frontend_dist_path,
-        }
-    }
-}
-
-struct GenericServerError {
-    message: String,
-}
-
-impl GenericServerError {
-    pub fn new(message: String) -> Self {
-        Self { message }
-    }
-}
-
-impl IntoResponse for GenericServerError {
-    fn into_response(self) -> axum::response::Response {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({
-                "error": self.message
-            })),
-        )
-            .into_response()
+            sessions: Arc::new(RwLock::new(Sessions::default())),
+            auth_state,
+        })
     }
 }

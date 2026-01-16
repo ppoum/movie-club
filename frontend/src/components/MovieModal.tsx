@@ -1,4 +1,4 @@
-import { getAverageClubRating, type Movie } from "../types/ApiTypes";
+import { type Movie, getAverageClubRating } from "../types/DataTypes";
 import "./MovieModal.css";
 import StarRating from "./StarRating";
 

@@ -32,7 +32,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
 
   buildInputs = [ node-frontend ];
 
-  cargoHash = "sha256-94JfGWxIJD8Gcyqpl4JJNg7sNZeddrVUY7vY0Ep9hDc=";
+  cargoHash = "sha256-HDa0RlCeVGU20crpoKJuzdpSAsKb40KBI8Qe9M0ZaOU=";
 
   postInstall = ''
     # Rename binary

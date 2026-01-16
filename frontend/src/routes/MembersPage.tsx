@@ -5,7 +5,7 @@ import {
   GetMembersData,
   getMovieBySlug,
   type Movie,
-} from "../types/ApiTypes";
+} from "../types/DataTypes";
 import "./MembersPage.css";
 
 export default function MembersPage({

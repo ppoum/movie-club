@@ -1,4 +1,4 @@
-import type { Movie } from "../types/ApiTypes";
+import type { Movie } from "../types/DataTypes";
 import "./SmallMovieCard.css";
 
 export default function SmallMovieCard({
