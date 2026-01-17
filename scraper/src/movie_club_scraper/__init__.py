@@ -44,6 +44,17 @@ class MovieInfo:
     top_actors: List[str]
     club_ratings: Dict[str, int | None] = field(init=False, default_factory=dict)
 
+@dataclass
+class UserInfo:
+    username: str
+    watchlist_length: int
+    watched_films_total: int
+    watched_films_current_year: int
+    favorite_slugs: list[str]
+    avatar_url: Optional[str]
+    recent_watchlist_slugs: list[str]
+    recent_watched_slugs: list[str]
+
 
 def get_movie_info(slug: str, top_actor_count: int) -> MovieInfo:
     movie_instance = Movie(slug)
@@ -84,6 +95,69 @@ def get_list_slugs(owner: str, slug: str) -> List[str]:
     for movie_dict in list_movies.values():
         slugs.append(movie_dict["slug"])
     return slugs
+
+
+def get_user_info(username: str, recent_count: int) -> UserInfo:
+    user_instance = User(username)
+
+    watched_films_total = user_instance.stats.get("films", 0)
+    watched_films_current_year = user_instance.stats.get("this_year", 0)
+
+    favorite_slugs = []
+    for entry in user_instance.favorites.values():
+        slug = entry.get("slug")
+        if slug is not None:
+            favorite_slugs.append(slug)
+
+    avatar_dict: dict[str, str] = user_instance.avatar #type: ignore
+    avatar_exists  = avatar_dict.get("exists", False)
+    if avatar_exists:
+        avatar_url = avatar_dict.get("url")
+    else:
+        avatar_url = None
+
+    # Extract recent watchlist and watched
+    recent_watchlist = user_instance.recent["watchlist"]
+    recent_watchlist_slugs = []
+    for entry in recent_watchlist.values():
+        slug = entry.get("slug")
+        if slug is not None:
+            recent_watchlist_slugs.append(slug)
+            if len(recent_watchlist_slugs) >= recent_count:
+                # List is full
+                break
+
+    # The diary dict has a key "months" filled with string values from "1" to "12".
+    # Each month points to a dict whose keys are days (str) and values are arrays.
+    # It seems like the keys are time-sorted, meaning January appears before December
+    # (even if 1 is smaller than 12)
+    diary: dict[str, dict] = user_instance.recent["diary"]
+    # Since the diary has nested loops, make this a function
+    def parse_diary(diary: dict[str, dict]) -> list[str]:
+        recent_watched: dict[str, dict[str, list[dict[str, str]]]] = diary["months"]
+        output = []
+        for (month, month_dict) in recent_watched.items():
+            for (day, movies) in month_dict.items():
+                for movie in movies:
+                    slug = movie.get("slug")
+                    if slug is not None:
+                        output.append(slug)
+                        if len(output) >= recent_count:
+                            # List is full
+                            return output
+        return output
+    recent_watched_slugs = parse_diary(diary)
+
+    return UserInfo(
+        username=user_instance.username,
+        watchlist_length=user_instance.watchlist_length,
+        watched_films_total=watched_films_total,
+        watched_films_current_year=watched_films_current_year,
+        favorite_slugs=favorite_slugs,
+        avatar_url=avatar_url,
+        recent_watchlist_slugs=recent_watchlist_slugs,
+        recent_watched_slugs=recent_watched_slugs
+    )
 
 
 def run_list(args: argparse.Namespace):
@@ -146,7 +220,6 @@ def run_list(args: argparse.Namespace):
 def run_movies(args: argparse.Namespace):
     top_actor_count: int = args.top_actor_count
     slugs: list[str] = args.slugs.split(",")
-
     logger.info(f"Scraping {len(slugs)} movies")
 
     movies = []
@@ -156,6 +229,21 @@ def run_movies(args: argparse.Namespace):
 
     output_formatted = [asdict(m) for m in movies]
     print(json.dumps(output_formatted))
+
+
+def run_users(args: argparse.Namespace):
+    usernames: list[str] = args.usernames.split(",")
+    recent_count: int = args.recent_count
+    logger.info(f"Scraping {len(usernames)} users")
+
+    users = []
+    for username in usernames:
+        logger.info(f"Scraping {username}...")
+        users.append(get_user_info(username, recent_count))
+
+    output_formatted = [asdict(u) for u in users]
+    print(json.dumps(output_formatted))
+
 
 def get_env_var(name: str, default: str | None = None) -> str:
     value = os.environ.get(name, default)
@@ -178,13 +266,19 @@ def main():
     list_parser.add_argument("-o", "--owner", help="Username of the list owner", required=True)
     list_parser.add_argument("-n", "--name", "--slug", help="Name/URL slug of the list", required=True)
     list_parser.add_argument("-u", "--users", help="Comma-separated list of users to fetch info about", required=True)
-    list_parser.add_argument("--top-actor-count", type=int, help="How many actors to keep while scraping actor list for each movie.", default=4)
+    list_parser.add_argument("--top-actor-count", type=int, help="How many actors to keep while scraping actor list for each movie", default=4)
 
     # Movies command
     movies_parser = subparsers.add_parser("movies", help="Scrape detailed information about the provided movies", parents=[common_parser])
     movies_parser.set_defaults(func=run_movies)
-    movies_parser.add_argument("--top-actor-count", type=int, help="How many actors to keep while scraping actor list for each movie.", default=4)
+    movies_parser.add_argument("--top-actor-count", type=int, help="How many actors to keep while scraping actor list for each movie", default=4)
     movies_parser.add_argument("slugs", help="Comma-separated list of movie slugs")
+
+    # Users command
+    users_parser = subparsers.add_parser("users", help="Scrape detailed information about the provided users", parents=[common_parser])
+    users_parser.set_defaults(func=run_users)
+    users_parser.add_argument("--recent-count", type=int, help="How many recently watched/watchlisted movies to scrape for each user", default=4)
+    users_parser.add_argument("usernames", help="Comma-separated list of Letterboxd usernames")
 
     args = parser.parse_args()
 
