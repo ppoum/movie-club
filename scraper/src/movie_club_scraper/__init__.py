@@ -228,6 +228,9 @@ def run_movies(args: argparse.Namespace):
         movies.append(get_movie_info(slug, top_actor_count))
 
     output_formatted = [asdict(m) for m in movies]
+    # Remove the `club_ratings` field, since it is always empty for this subcommand
+    for item in output_formatted:
+        item.pop("club_ratings", None)
     print(json.dumps(output_formatted))
 
 
