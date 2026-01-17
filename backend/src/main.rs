@@ -15,10 +15,12 @@ use tracing_subscriber::EnvFilter;
 use crate::{
     api::auth::{AuthState, Sessions},
     repository::{StateRepository, StateRepositoryError},
+    services::records::RecordsState,
 };
 
 mod api;
 mod repository;
+mod services;
 
 const FRONTEND_DIST_DIR: &str = env!("FRONTEND_DIST_DIR");
 
@@ -67,6 +69,7 @@ struct AppState {
 
     pub sessions: Arc<RwLock<Sessions>>,
     pub auth_state: Arc<RwLock<StateRepository<AuthState>>>,
+    pub records_state: Arc<RwLock<StateRepository<RecordsState>>>,
 }
 
 impl AppState {
@@ -86,18 +89,33 @@ impl AppState {
         let auth_state = {
             let file_path = state_dir.join("auth.json");
 
-            let repo = match StateRepository::try_from_file(file_path.clone()) {
+            let repo = match StateRepository::try_from_file(file_path) {
                 Ok(r) => r,
                 Err(StateRepositoryError::FileNotFound(p)) => {
                     log::warn!(
                         "Auth state at {p:?} does not exist, attempting to create default file"
                     );
-                    StateRepository::new_save_default(file_path)
-                        .context("Failed to create and save default auth state file")?
+                    StateRepository::new_save_default(p)
+                        .context("Failed to create default auth state file")?
                 }
                 Err(e) => return Err(e).context("Unable to load auth state file"),
             };
+            Arc::new(RwLock::new(repo))
+        };
 
+        let records_state = {
+            let file_path = state_dir.join("records.json");
+            let repo = match StateRepository::try_from_file(file_path.clone()) {
+                Ok(r) => r,
+                Err(StateRepositoryError::FileNotFound(p)) => {
+                    log::warn!(
+                        "Records state at {p:?} does not exist, attempting to create default file"
+                    );
+                    StateRepository::new_save_default(p)
+                        .context("Failed to create default records state file")?
+                }
+                Err(e) => return Err(e).context("Unable to load records state file"),
+            };
             Arc::new(RwLock::new(repo))
         };
 
@@ -106,6 +124,7 @@ impl AppState {
             frontend_dist_path,
             sessions: Arc::new(RwLock::new(Sessions::default())),
             auth_state,
+            records_state,
         })
     }
 }

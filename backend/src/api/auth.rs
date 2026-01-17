@@ -147,6 +147,7 @@ pub enum AuthStateError {
     HashingError,
 }
 
+// TODO: Refactor AuthState into auth service
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(default)]
 pub struct AuthState {
