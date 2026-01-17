@@ -14,6 +14,7 @@ use thiserror::Error;
 
 use crate::{
     AppState,
+    api::auth::ExtractUserSession,
     repository::StateRepositoryError,
     services::records::{RecordsStateError, SlimRecommendationRecord},
 };
@@ -74,6 +75,7 @@ struct PutRecommendationsPayload {
     recommendations: Vec<SlimRecommendationRecord>,
 }
 async fn put_recommendations(
+    ExtractUserSession(_): ExtractUserSession,
     State(state): State<Arc<AppState>>,
     Json(payload): Json<PutRecommendationsPayload>,
 ) -> Result<impl IntoResponse, RecordsApiError> {
@@ -93,6 +95,7 @@ struct DeleteRecommendationsPayload {
     recommendations: Vec<NaiveDate>,
 }
 async fn delete_recommendations(
+    ExtractUserSession(_): ExtractUserSession,
     State(state): State<Arc<AppState>>,
     Json(payload): Json<DeleteRecommendationsPayload>,
 ) -> Result<impl IntoResponse, RecordsApiError> {
