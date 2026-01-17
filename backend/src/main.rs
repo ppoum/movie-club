@@ -82,7 +82,7 @@ impl AppState {
             .unwrap_or(FRONTEND_DIST_DIR.into())
             .into();
 
-        let state_dir: PathBuf = std::env::var("STATE_PATH")
+        let state_dir: PathBuf = std::env::var("STATE_DIRECTORY")
             .unwrap_or("./state/".into())
             .into();
 
