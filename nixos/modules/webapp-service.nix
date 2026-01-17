@@ -52,6 +52,7 @@ in
       serviceConfig = {
         DynamicUser = true;
         Type = "simple";
+        StateDirectory = "movie-club";
         ExecStart = "${lib.getExe cfg.package}";
       };
       environment = {

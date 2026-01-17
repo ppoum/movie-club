@@ -74,7 +74,7 @@ in
         User = "movie-club-scraper";
         Group = "movie-club";
         Type = "oneshot";
-        StateDirectory = "movie-club";
+        StateDirectory = "movie-club-scraper";
         ExecStart = ''
           ${lib.getExe cfg.package} list \
             --loglevel "${config.services.movie-club.scraper.loglevel}" \
