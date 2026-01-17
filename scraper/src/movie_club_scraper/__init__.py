@@ -1,3 +1,4 @@
+import argparse
 import json
 import logging
 import os
@@ -85,13 +86,20 @@ def get_list_slugs(owner: str, slug: str) -> List[str]:
     return slugs
 
 
-def start(
-    list_owner: str,
-    list_slug: str,
-    club_users: List[str],
-    top_actor_count: int,
-    output_dir: str,
-):
+def run_list(args: argparse.Namespace):
+    # Get CLI args
+    list_owner: str = args.owner
+    list_slug: str = args.name
+    club_users: list[str] = args.users.split(",")
+    top_actor_count: int = args.top_actor_count
+
+    # For now, get OUTPUT_DIR from environment, but in the future, just print to stdout
+    output_dir = get_env_var("OUTPUT_DIRECTORY", default="")
+    if output_dir == "":
+        # Fallback to STATE_DIRECTORY
+        output_dir = get_env_var("STATE_DIRECTORY")
+
+
     slugs = get_list_slugs(list_owner, list_slug)
     logger.info(f"Found {len(slugs)} movie slugs in list")
 
@@ -138,30 +146,35 @@ def start(
 def get_env_var(name: str, default: str | None = None) -> str:
     value = os.environ.get(name, default)
     if value is None:
-        logger.fatal(f"{name} is not defined")
+        logger.fatal(f"Environment variable {name} is not defined")
         sys.exit(1)
     return value
 
 
 def main():
-    log_level = get_env_var("LOGLEVEL", default="INFO")
-    logging.basicConfig(level=log_level)
+    common_parser = argparse.ArgumentParser(add_help=False)
+    common_parser.add_argument("--loglevel", default=argparse.SUPPRESS, help="Log level, defaults to $LOGLEVEL")
 
-    list_owner = get_env_var("LIST_OWNER")
-    list_slug = get_env_var("LIST_SLUG")
-    club_users = get_env_var("CLUB_USERS").split(",")
-    output_dir = get_env_var("OUTPUT_DIRECTORY", default="")
-    if output_dir == "":
-        # Fallback to STATE_DIRECTORY
-        output_dir = get_env_var("STATE_DIRECTORY")
+    parser = argparse.ArgumentParser(prog="movie-club-scraper", parents=[common_parser])
+    subparsers = parser.add_subparsers(dest="command", required=True)
 
-    try:
-        top_actor_count = int(get_env_var("TOP_ACTOR_COUNT", default="4"))
-    except ValueError:
-        logger.fatal("Invalid TOP_ACTOR_COUNT value")
-        sys.exit(1)
+    # List command
+    list_parser = subparsers.add_parser("list", help="Scrape information about a Letterboxd list", parents=[common_parser])
+    list_parser.set_defaults(func=run_list)
+    list_parser.add_argument("-o", "--owner", help="Username of the list owner", required=True)
+    list_parser.add_argument("-n", "--name", "--slug", help="Name/URL slug of the list", required=True)
+    list_parser.add_argument("-u", "--users", help="Comma-separated list of users to fetch info about", required=True)
+    list_parser.add_argument("--top-actor-count", type=int, help="How many actors to keep while scraping actor list for each movie.", default=4)
 
-    start(list_owner, list_slug, club_users, top_actor_count, output_dir)
+    args = parser.parse_args()
+
+    if hasattr(args, "loglevel"):
+        loglevel = args.loglevel
+    else:
+        loglevel = get_env_var("LOGLEVEL", default="INFO")
+    logging.basicConfig(level=loglevel)
+
+    args.func(args)
 
 
 if __name__ == "__main__":

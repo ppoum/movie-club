@@ -75,24 +75,22 @@ in
         Group = "movie-club";
         Type = "oneshot";
         StateDirectory = "movie-club";
-        ExecStart = "${lib.getExe cfg.package}";
+        ExecStart = ''
+          ${lib.getExe cfg.package} list \
+            --loglevel "${config.services.movie-club.scraper.loglevel}" \
+            --owner "${config.services.movie-club.scraper.list_owner}" \
+            --name "${config.services.movie-club.scraper.list_slug}" \
+            --users "${lib.strings.concatStringsSep "," config.services.movie-club.scraper.club_users}" \
+            --top-actor-count "${builtins.toString config.services.movie-club.scraper.top_actor_count}"'';
       };
-      environment = {
-        LIST_OWNER = config.services.movie-club.scraper.list_owner;
-        LIST_SLUG = config.services.movie-club.scraper.list_slug;
-        CLUB_USERS = lib.strings.concatStringsSep "," config.services.movie-club.scraper.club_users;
-        TOP_ACTOR_COUNT = builtins.toString config.services.movie-club.scraper.top_actor_count;
-        LOGLEVEL = config.services.movie-club.scraper.loglevel;
-      }
-      // (
-        # Only define envvar if optin is set
+      environment =
+        # Only define envvar if option is set
         if config.services.movie-club.scraper.output_dir != null then
           {
             OUTPUT_DIRECTORY = config.services.movie-club.scraper.output_dir;
           }
         else
-          { }
-      );
+          { };
     };
 
     systemd.timers.movie-club-scraper = {
