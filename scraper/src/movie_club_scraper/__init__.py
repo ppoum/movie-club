@@ -143,6 +143,20 @@ def run_list(args: argparse.Namespace):
     logger.info(f"Stats written to {output_file}")
 
 
+def run_movies(args: argparse.Namespace):
+    top_actor_count: int = args.top_actor_count
+    slugs: list[str] = args.slugs.split(",")
+
+    logger.info(f"Scraping {len(slugs)} movies")
+
+    movies = []
+    for slug in slugs:
+        logger.info(f"Scraping {slug}...")
+        movies.append(get_movie_info(slug, top_actor_count))
+
+    output_formatted = [asdict(m) for m in movies]
+    print(json.dumps(output_formatted))
+
 def get_env_var(name: str, default: str | None = None) -> str:
     value = os.environ.get(name, default)
     if value is None:
@@ -165,6 +179,12 @@ def main():
     list_parser.add_argument("-n", "--name", "--slug", help="Name/URL slug of the list", required=True)
     list_parser.add_argument("-u", "--users", help="Comma-separated list of users to fetch info about", required=True)
     list_parser.add_argument("--top-actor-count", type=int, help="How many actors to keep while scraping actor list for each movie.", default=4)
+
+    # Movies command
+    movies_parser = subparsers.add_parser("movies", help="Scrape detailed information about the provided movies", parents=[common_parser])
+    movies_parser.set_defaults(func=run_movies)
+    movies_parser.add_argument("--top-actor-count", type=int, help="How many actors to keep while scraping actor list for each movie.", default=4)
+    movies_parser.add_argument("slugs", help="Comma-separated list of movie slugs")
 
     args = parser.parse_args()
 
