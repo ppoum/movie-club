@@ -1,25 +1,49 @@
 use chrono::NaiveDate;
+use garde::Validate;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum RecordsStateError {
-    #[error("The recommendation winner is not part of the recommendations")]
-    InvalidWinner,
-    #[error("Missing field {0}")]
-    MissingField(String),
+    #[error("New record {0} is missing field: {1}")]
+    MissingField(NaiveDate, String),
     #[error("No existing recommendation found with date: {0}")]
     NotFound(NaiveDate),
+    #[error("Record {0} is invalid: {1}")]
+    ValidationError(NaiveDate, #[source] garde::Report),
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, Validate)]
+#[garde(allow_unvalidated)]
 #[serde(rename_all = "camelCase")]
 pub struct RecommendationRecord {
     pub date: NaiveDate,
+    #[garde(length(min = 1))]
     pub member: String,
+    #[garde(inner(length(min = 1)))]
     pub recommendations: [String; 3],
+    #[garde(custom(validate_winner_in_recommendations(&self.recommendations)))]
     pub winner: Option<String>,
+    #[garde(range(min = 0, max = 100))]
     pub external_odds: Option<u32>,
+}
+
+/// Ensure that when winner is `Some(w)`, then `w` is a value contained in the `recommendations`
+/// slice.
+fn validate_winner_in_recommendations(
+    recommendations: &[String],
+) -> impl FnOnce(&Option<String>, &()) -> garde::Result {
+    move |winner, _| {
+        if let Some(winner) = winner
+            && !recommendations.contains(winner)
+        {
+            Err(garde::Error::new(
+                "value not found in list of recommendations",
+            ))
+        } else {
+            Ok(())
+        }
+    }
 }
 
 impl RecommendationRecord {
@@ -42,16 +66,20 @@ impl TryFrom<SlimRecommendationRecord> for RecommendationRecord {
             date: value.date,
             member: value
                 .member
-                .ok_or(RecordsStateError::MissingField("member".into()))?,
+                .ok_or(RecordsStateError::MissingField(value.date, "member".into()))?,
             recommendations: value
                 .recommendations
-                .ok_or(RecordsStateError::MissingField("recommendations".into()))?,
+                .ok_or(RecordsStateError::MissingField(
+                    value.date,
+                    "recommendations".into(),
+                ))?,
             winner: value
                 .winner
-                .ok_or(RecordsStateError::MissingField("winner".into()))?,
-            external_odds: value
-                .external_odds
-                .ok_or(RecordsStateError::MissingField("external_odds".into()))?,
+                .ok_or(RecordsStateError::MissingField(value.date, "winner".into()))?,
+            external_odds: value.external_odds.ok_or(RecordsStateError::MissingField(
+                value.date,
+                "external_odds".into(),
+            ))?,
         })
     }
 }
@@ -102,18 +130,18 @@ impl RecommendationList {
         new_slim: SlimRecommendationRecord,
     ) -> Result<(), RecordsStateError> {
         if let Some(existing) = self.0.iter_mut().find(|r| r.date == new_slim.date) {
-            // Updating existing
+            // Updating existing and check if the record is still valid
             let new_rec = RecommendationRecord::new_with_slim(existing.clone(), new_slim);
-            // TODO: Rewrite with better validation
-            if let Some(winner) = new_rec.winner.as_ref()
-                && !new_rec.recommendations.contains(winner)
-            {
-                return Err(RecordsStateError::InvalidWinner);
-            }
+            new_rec
+                .validate()
+                .map_err(|e| RecordsStateError::ValidationError(new_rec.date, e))?;
             *existing = new_rec;
         } else {
             // Check if "slim" has all fields and insert in list if it does
             let recommendation: RecommendationRecord = new_slim.try_into()?;
+            recommendation
+                .validate()
+                .map_err(|e| RecordsStateError::ValidationError(recommendation.date, e))?;
             self.0.push(recommendation);
         }
         Ok(())
@@ -163,6 +191,16 @@ impl RecordsState {
 mod test {
     use super::*;
 
+    fn valid_recommendation_record() -> RecommendationRecord {
+        RecommendationRecord {
+            date: NaiveDate::from_ymd_opt(1, 1, 1).unwrap(),
+            member: "member".into(),
+            recommendations: ["rec1".into(), "rec2".into(), "rec3".into()],
+            winner: Some("rec1".into()),
+            external_odds: Some(100),
+        }
+    }
+
     /// `try_add_recommendations` adds a new rec when the slim contains all fields
     #[test]
     fn try_add_recommendations_works_when_slim_is_full() {
@@ -170,8 +208,8 @@ mod test {
 
         let full_slim = SlimRecommendationRecord {
             date: Default::default(),
-            member: Some(String::new()),
-            recommendations: Some([String::new(), String::new(), String::new()]),
+            member: Some("member".into()),
+            recommendations: Some(["rec1".into(), "rec2".into(), "rec3".into()]),
             winner: Some(None),
             external_odds: Some(Some(0)),
         };
@@ -202,7 +240,7 @@ mod test {
                     date,
                     member: "foo".into(),
                     external_odds: Some(5),
-                    ..Default::default()
+                    ..valid_recommendation_record()
                 }
                 .into(),
             ])
@@ -255,11 +293,11 @@ mod test {
 
         let rec1 = RecommendationRecord {
             date: date1,
-            ..Default::default()
+            ..valid_recommendation_record()
         };
         let rec2 = RecommendationRecord {
             date: date2,
-            ..Default::default()
+            ..valid_recommendation_record()
         };
         state
             .try_add_recommendations(vec![rec1.into(), rec2.into()])
@@ -269,5 +307,105 @@ mod test {
             .try_remove_recommendations(vec![date1, date2])
             .expect("call should not fail");
         assert_eq!(state.recommendations.0.len(), 0);
+    }
+
+    #[test]
+    fn recommendation_record_validation_accepts_valid_struct() {
+        let recommendation_record = RecommendationRecord {
+            date: NaiveDate::from_ymd_opt(1, 1, 1).unwrap(),
+            member: "foo".into(),
+            recommendations: ["1".into(), "2".into(), "3".into()],
+            winner: Some("1".into()),
+            external_odds: Some(0),
+        };
+
+        recommendation_record
+            .validate()
+            .expect("validation shouldn't fail");
+    }
+
+    #[test]
+    fn recommendation_record_validation_errs_on_empty_member_name() {
+        let recommendation_record = RecommendationRecord {
+            date: NaiveDate::from_ymd_opt(1, 1, 1).unwrap(),
+            member: "".into(),
+            recommendations: ["1".into(), "2".into(), "3".into()],
+            winner: Some("1".into()),
+            external_odds: Some(0),
+        };
+
+        recommendation_record
+            .validate()
+            .expect_err("validation should fail");
+    }
+
+    #[test]
+    fn recommendation_record_validation_errs_on_empty_recommendation_value() {
+        let recommendation_record = RecommendationRecord {
+            date: NaiveDate::from_ymd_opt(1, 1, 1).unwrap(),
+            member: "foo".into(),
+            recommendations: ["1".into(), "".into(), "3".into()],
+            winner: Some("1".into()),
+            external_odds: Some(0),
+        };
+
+        recommendation_record
+            .validate()
+            .expect_err("validation should fail");
+    }
+
+    /// The winner value, if Some, must be a value found in the recommendations array
+    #[test]
+    fn recommendation_record_validation_errs_on_wrong_winner() {
+        let recommendation_record = RecommendationRecord {
+            date: NaiveDate::from_ymd_opt(1, 1, 1).unwrap(),
+            member: "foo".into(),
+            recommendations: ["1".into(), "2".into(), "3".into()],
+            winner: Some("newvalue".into()),
+            external_odds: Some(0),
+        };
+
+        recommendation_record
+            .validate()
+            .expect_err("validation should fail");
+
+        // Validation shouldn't fail when winner is none
+        let recommendation_record = RecommendationRecord {
+            date: NaiveDate::from_ymd_opt(1, 1, 1).unwrap(),
+            member: "foo".into(),
+            recommendations: ["1".into(), "2".into(), "3".into()],
+            winner: None,
+            external_odds: Some(0),
+        };
+
+        recommendation_record
+            .validate()
+            .expect("validation shouldn't fail");
+    }
+
+    #[test]
+    fn recommendation_record_validation_errs_on_external_odds_out_of_range() {
+        // None is always ok
+        let recommendation_record = RecommendationRecord {
+            date: NaiveDate::from_ymd_opt(1, 1, 1).unwrap(),
+            member: "foo".into(),
+            recommendations: ["1".into(), "2".into(), "3".into()],
+            winner: Some("1".into()),
+            external_odds: None,
+        };
+        recommendation_record
+            .validate()
+            .expect("validation shouldn't fail");
+
+        let recommendation_record = RecommendationRecord {
+            date: NaiveDate::from_ymd_opt(1, 1, 1).unwrap(),
+            member: "foo".into(),
+            recommendations: ["1".into(), "2".into(), "3".into()],
+            winner: Some("1".into()),
+            external_odds: Some(101),
+        };
+        recommendation_record
+            .validate()
+            .expect_err("validation should fail");
     }
 }

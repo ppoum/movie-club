@@ -43,9 +43,9 @@ impl IntoResponse for RecordsApiError {
     fn into_response(self) -> axum::response::Response {
         let msg = self.to_string();
         let status = match self {
-            Self::StateError(RecordsStateError::InvalidWinner) => StatusCode::BAD_REQUEST,
-            Self::StateError(RecordsStateError::MissingField(_)) => StatusCode::BAD_REQUEST,
+            Self::StateError(RecordsStateError::MissingField(_, _)) => StatusCode::BAD_REQUEST,
             Self::StateError(RecordsStateError::NotFound(_)) => StatusCode::NOT_FOUND,
+            Self::StateError(RecordsStateError::ValidationError(_, _)) => StatusCode::BAD_REQUEST,
             Self::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
         };
 
