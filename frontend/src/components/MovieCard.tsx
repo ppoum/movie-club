@@ -16,18 +16,14 @@ export default function MovieCard({
       style={{ cursor: "pointer" }}
     >
       <div className="poster-container">
-        <img
-          src={movie.poster_url}
-          alt={movie.title}
-          className="movie-poster"
-        />
+        <img src={movie.posterUrl} alt={movie.title} className="movie-poster" />
       </div>
       <div className="movie-title">
         <strong>{movie.title}</strong> ({movie.year})<br />
       </div>
       <div className="movie-rating">
         Club Rating: {clubRating === null ? "N/A" : clubRating.toFixed(2)} (
-        {movie.avg_rating})
+        {movie.avgRating})
       </div>
     </div>
   );

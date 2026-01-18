@@ -1,13 +1,13 @@
 export type Movie = {
   slug: string;
-  poster_url: string;
+  posterUrl: string;
   title: string;
   year: number;
   runtime: number;
-  avg_rating: number;
-  director: Director;
-  top_actors: Actor[];
-  club_ratings: Ratings;
+  avgRating: number;
+  director: Director | null;
+  topActors: Actor[];
+  clubRatings: Ratings;
 };
 
 export type Director = {
@@ -19,7 +19,7 @@ export type Director = {
 export type Actor = {
   slug: string;
   name: string;
-  role_name: string;
+  roleName: string;
 };
 
 export type Ratings = Record<string, number | null>;
@@ -30,7 +30,7 @@ export type Ratings = Record<string, number | null>;
  * Returns the average club rating for a movie, ignoring users with no ratings.
  */
 export function getAverageClubRating(movie: Movie): number | null {
-  const ratings = Object.values(movie.club_ratings).filter(
+  const ratings = Object.values(movie.clubRatings).filter(
     (r): r is number => r !== null,
   );
   if (!ratings.length) return null;
@@ -43,7 +43,7 @@ export function getAverageMemberRating(
   username: string,
 ): number | null {
   const ratings: number[] = data
-    .map((movie) => movie.club_ratings[username])
+    .map((movie) => movie.clubRatings[username])
     .filter((r): r is number => r !== null);
   if (!ratings.length) return null;
   const sum = ratings.reduce((acc, r) => acc + r, 0);
@@ -120,7 +120,7 @@ export function GetMembersData(data: Movie[]) {
     }
   > = {};
   data.forEach((movie) => {
-    Object.entries(movie.club_ratings).forEach(([username, rating]) => {
+    Object.entries(movie.clubRatings).forEach(([username, rating]) => {
       if (!members[username]) {
         members[username] = {
           username,
@@ -131,14 +131,14 @@ export function GetMembersData(data: Movie[]) {
         const currentLowestSlug = members[username].lowestRatingMovie;
         const currentLowestRating = data.find(
           (m) => m.slug === currentLowestSlug,
-        )?.club_ratings[username];
+        )?.clubRatings[username];
         if (currentLowestRating == null || rating < currentLowestRating)
           members[username].lowestRatingMovie = movie.slug;
 
         const currentHighestSlug = members[username].highestRatingMovie;
         const currentHighestRating = data.find(
           (m) => m.slug === currentHighestSlug,
-        )?.club_ratings[username];
+        )?.clubRatings[username];
         if (currentHighestRating == null || rating > currentHighestRating)
           members[username].highestRatingMovie = movie.slug;
       }

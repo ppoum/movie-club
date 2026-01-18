@@ -10,7 +10,7 @@ export default function MovieModal({
   onClose: () => void;
 }) {
   const avgClubRating = getAverageClubRating(movie);
-  const clubRatings = movie.club_ratings;
+  const clubRatings = movie.clubRatings;
   return (
     <>
       <div className="modal-overlay" onClick={onClose}>
@@ -22,7 +22,7 @@ export default function MovieModal({
             <img
               className="modal-poster"
               alt="{movie.title} poster"
-              src={movie.poster_url}
+              src={movie.posterUrl}
             />
           </div>
           <div className="modal-right">
@@ -32,7 +32,9 @@ export default function MovieModal({
             <div className="modal-info-section">
               <div className="modal-info-item">
                 <span className="modal-info-label">Director:</span>
-                <span>{movie.director.name}</span>
+                <span>
+                  {movie.director !== null ? movie.director.name : "N/A"}
+                </span>
               </div>
               <div className="modal-info-item">
                 <span className="modal-info-label">Runtime:</span>
@@ -42,17 +44,17 @@ export default function MovieModal({
             </div>
 
             <div className="modal-ratings-section">
-              <RatingBox title="Global Rating" rating={movie.avg_rating} />
+              <RatingBox title="Global Rating" rating={movie.avgRating} />
               <RatingBox title="Club Rating" rating={avgClubRating} />
             </div>
 
             <div className="modal-cast-section">
               <h3>Cast</h3>
               <div className="modal-cast-list">
-                {movie.top_actors.map((actor) => (
+                {movie.topActors.map((actor) => (
                   <div className="focus-box">
                     <p className="modal-cast-name">{actor.name}</p>
-                    <p className="modal-cast-role">{actor.role_name}</p>
+                    <p className="modal-cast-role">{actor.roleName}</p>
                   </div>
                 ))}
               </div>
