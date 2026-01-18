@@ -71,7 +71,7 @@ struct AppState {
 
     pub sessions: Arc<RwLock<Sessions>>,
     pub auth_state: Arc<RwLock<StateRepository<AuthState>>>,
-    pub records_state: Arc<RwLock<StateRepository<RecordsState>>>,
+    pub records_state: Arc<tokio::sync::RwLock<StateRepository<RecordsState>>>,
 }
 
 impl AppState {
@@ -101,21 +101,9 @@ impl AppState {
             Arc::new(RwLock::new(repo))
         };
 
-        let records_state = {
-            let file_path = state_dir.join("records.json");
-            let repo = match StateRepository::try_from_file(file_path.clone()) {
-                Ok(r) => r,
-                Err(StateRepositoryError::FileNotFound(p)) => {
-                    log::warn!(
-                        "Records state at {p:?} does not exist, attempting to create default file"
-                    );
-                    StateRepository::new_save_default(p)
-                        .context("Failed to create default records state file")?
-                }
-                Err(e) => return Err(e).context("Unable to load records state file"),
-            };
-            Arc::new(RwLock::new(repo))
-        };
+        let records_state = Arc::new(tokio::sync::RwLock::new(services::records::create_repo(
+            state_dir,
+        )?));
 
         Ok(Self {
             data_path,
