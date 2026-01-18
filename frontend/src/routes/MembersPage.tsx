@@ -41,7 +41,7 @@ export default function MembersPage({
                     />
                     <div style={{ paddingTop: "15px" }}>
                       <StarRating
-                        rating={highestMovie.club_ratings[member.username]}
+                        rating={highestMovie.clubRatings[member.username]}
                         size={20}
                         color="white"
                       />
@@ -61,7 +61,7 @@ export default function MembersPage({
                     />
                     <div style={{ paddingTop: "15px" }}>
                       <StarRating
-                        rating={lowestMovie.club_ratings[member.username]}
+                        rating={lowestMovie.clubRatings[member.username]}
                         size={20}
                         color="white"
                       />

@@ -1,7 +1,45 @@
+use std::{
+    io,
+    path::{Path, PathBuf},
+};
+
+use anyhow::Context;
+use atomic_write_file::AtomicWriteFile;
 use chrono::NaiveDate;
 use garde::Validate;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
+
+use crate::repository::{StateRepository, StateRepositoryError};
+
+pub fn create_repo(state_dir: impl AsRef<Path>) -> anyhow::Result<StateRepository<RecordsState>> {
+    let state_dir = state_dir.as_ref();
+    let file_path = state_dir.join("records.json");
+    let mut repo: StateRepository<RecordsState> =
+        match StateRepository::try_from_file(file_path.clone()) {
+            Ok(r) => r,
+            Err(StateRepositoryError::FileNotFound(p)) => {
+                log::warn!(
+                    "Records state at {p:?} does not exist, attempting to create default file"
+                );
+                StateRepository::new_save_default(p)
+                    .context("Failed to create default records state file")?
+            }
+            Err(e) => return Err(e).context("Unable to load records state file"),
+        };
+
+    // Records state also needs STATE_DIR/cache/records directory to exist
+    let rec_cache_dir = state_dir.join("cache/records");
+    std::fs::create_dir_all(&rec_cache_dir).with_context(|| {
+        format!(
+            "Unable to create {} directory",
+            rec_cache_dir.to_string_lossy()
+        )
+    })?;
+    repo.cache_dir = rec_cache_dir;
+
+    Ok(repo)
+}
 
 #[derive(Debug, Error)]
 pub enum RecordsStateError {
@@ -11,6 +49,20 @@ pub enum RecordsStateError {
     NotFound(NaiveDate),
     #[error("Record {0} is invalid: {1}")]
     ValidationError(NaiveDate, #[source] garde::Report),
+    #[error("Failed to run scraper: {0}")]
+    ScraperError(#[source] io::Error),
+    #[error("Failed to parse scraper output: {0}")]
+    ScraperOutputFormatError(#[source] serde_json::Error),
+}
+
+#[derive(Debug, Error)]
+enum RecordsCacheError {
+    #[error("File not found")]
+    FileNotFound,
+    #[error(transparent)]
+    DeserializationError(#[from] serde_json::Error),
+    #[error(transparent)]
+    Io(#[from] io::Error),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default, Validate)]
@@ -112,9 +164,14 @@ impl From<RecommendationRecord> for SlimRecommendationRecord {
     }
 }
 
+// TODO: With `cache_dir`, RecordsState now has some non-state related information.
+// We should separate our concerns and create a new `RecordsService` struct that owns the
+// StateRepo<RecordsState> as well as the cache dir path.
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct RecordsState {
     recommendations: RecommendationList,
+    #[serde(skip, default)]
+    cache_dir: PathBuf,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -157,6 +214,41 @@ impl RecommendationList {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct RecommendationDetails {
+    slug: String,
+    poster_url: String,
+    title: String,
+    year: u32,
+}
+
+impl RecommendationDetails {
+    /// Attempts to generate the recommendation details for the specified slug by calling the
+    /// scraper.
+    pub async fn try_from_slugs(slugs: &[String]) -> Result<Vec<Self>, RecordsStateError> {
+        let slugs = slugs.join(",");
+        let output = tokio::process::Command::new("movie-club-scraper")
+            .args(["movies", &slugs])
+            .output()
+            .await
+            .map_err(RecordsStateError::ScraperError)?;
+
+        if output.status.success() {
+            let parsed: Vec<Self> = serde_json::from_slice(&output.stdout)
+                .map_err(RecordsStateError::ScraperOutputFormatError)?;
+            Ok(parsed)
+        } else {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            log::error!("Scraper returned non-zero exit code: {stderr}");
+            Err(RecordsStateError::ScraperError(io::Error::other(format!(
+                "exit code {:?}",
+                output.status.code()
+            ))))
+        }
+    }
+}
+
 impl RecordsState {
     pub fn recommendations(&self) -> &[RecommendationRecord] {
         &self.recommendations.0
@@ -169,7 +261,10 @@ impl RecordsState {
         let mut new_recommendations = self.recommendations.clone();
 
         for extra in extra_recommendations {
+            let date = extra.date;
             new_recommendations.try_push(extra)?;
+            // In case a rec was modified, delete its cached detailed file
+            let _ = self.delete_recommendation_details_file(date);
         }
 
         self.recommendations = new_recommendations;
@@ -182,8 +277,85 @@ impl RecordsState {
     ) -> Result<(), RecordsStateError> {
         for date in removing_dates {
             self.recommendations.try_remove(date)?;
+            // Delete the cached details file to clean up disk space
+            let _ = self.delete_recommendation_details_file(date);
         }
         Ok(())
+    }
+
+    /// Returns extra details regarding a recommendation that isn't included in
+    /// [RecommendationRecord]. This includes title, year and poster URLs for every movie in a
+    /// recommendation.
+    pub async fn get_recommendation_details(
+        &self,
+        date: NaiveDate,
+    ) -> Result<Vec<RecommendationDetails>, RecordsStateError> {
+        // Check if record exists, and only after attempt to load cached details
+        let rec = self
+            .recommendations
+            .0
+            .iter()
+            .find(|r| r.date == date)
+            .ok_or(RecordsStateError::NotFound(date))?;
+
+        match self.load_recommendation_details_file(date).await {
+            Ok(details) => return Ok(details),
+            Err(RecordsCacheError::FileNotFound) => {
+                log::info!("Cached details for recommendation {date} not found")
+            }
+            Err(RecordsCacheError::DeserializationError(e)) => {
+                log::warn!("Failed to deserialize cached recommendation details for {date}: {e}")
+            }
+            Err(RecordsCacheError::Io(e)) => {
+                log::error!("IO error while reading cached recommendation details for {date}: {e}")
+            }
+        };
+
+        log::info!("Generating details for recommendation {date}");
+        let recs = RecommendationDetails::try_from_slugs(&rec.recommendations).await?;
+        let _ = self
+            .save_recommendation_details_file(date, &recs)
+            .inspect_err(|e| log::error!("Failed to write details cache file: {e}"));
+
+        Ok(recs)
+    }
+
+    async fn load_recommendation_details_file(
+        &self,
+        date: NaiveDate,
+    ) -> Result<Vec<RecommendationDetails>, RecordsCacheError> {
+        let file_name = format!("recommendations_{date}.json");
+        let file_path = self.cache_dir.join(file_name);
+
+        let contents = match tokio::fs::read(file_path).await {
+            Ok(s) => s,
+            Err(e) if e.kind() == io::ErrorKind::NotFound => {
+                return Err(RecordsCacheError::FileNotFound);
+            }
+            Err(e) => return Err(e.into()),
+        };
+
+        serde_json::from_slice(&contents).map_err(Into::into)
+    }
+
+    fn save_recommendation_details_file(
+        &self,
+        date: NaiveDate,
+        recs: &[RecommendationDetails],
+    ) -> io::Result<()> {
+        let file_name = format!("recommendations_{date}.json");
+        let file_path = self.cache_dir.join(file_name);
+        let mut file = AtomicWriteFile::open(file_path)?;
+        serde_json::to_writer(&mut file, recs)?;
+        file.commit()?;
+
+        Ok(())
+    }
+
+    fn delete_recommendation_details_file(&self, date: NaiveDate) -> io::Result<()> {
+        let file_name = format!("recommendations_{date}.json");
+        let file_path = self.cache_dir.join(file_name);
+        std::fs::remove_file(file_path)
     }
 }
 

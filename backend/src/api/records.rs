@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use axum::{
     Json, Router,
-    extract::State,
+    extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
     routing::{delete, get, put},
@@ -24,6 +24,7 @@ pub fn routes() -> Router<Arc<AppState>> {
         .route("/recommendations", get(get_recommendations))
         .route("/recommendations", put(put_recommendations))
         .route("/recommendations", delete(delete_recommendations))
+        .route("/recommendations/{date}", get(get_recommendation_info))
 }
 
 #[derive(Debug, Error)]
@@ -46,6 +47,12 @@ impl IntoResponse for RecordsApiError {
             Self::StateError(RecordsStateError::MissingField(_, _)) => StatusCode::BAD_REQUEST,
             Self::StateError(RecordsStateError::NotFound(_)) => StatusCode::NOT_FOUND,
             Self::StateError(RecordsStateError::ValidationError(_, _)) => StatusCode::BAD_REQUEST,
+            Self::StateError(RecordsStateError::ScraperError(_)) => {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
+            Self::StateError(RecordsStateError::ScraperOutputFormatError(_)) => {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
             Self::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
         };
 
@@ -62,10 +69,7 @@ impl IntoResponse for RecordsApiError {
 async fn get_recommendations(
     State(state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, RecordsApiError> {
-    let state = state
-        .records_state
-        .read()
-        .map_err(|_| RecordsApiError::InternalServerError)?;
+    let state = state.records_state.read().await;
 
     Ok(Json(state.recommendations().to_owned()))
 }
@@ -79,10 +83,7 @@ async fn put_recommendations(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<PutRecommendationsPayload>,
 ) -> Result<impl IntoResponse, RecordsApiError> {
-    let mut state = state
-        .records_state
-        .write()
-        .map_err(|_| RecordsApiError::InternalServerError)?;
+    let mut state = state.records_state.write().await;
 
     state.try_add_recommendations(payload.recommendations)?;
     state.try_save_file()?;
@@ -99,13 +100,20 @@ async fn delete_recommendations(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<DeleteRecommendationsPayload>,
 ) -> Result<impl IntoResponse, RecordsApiError> {
-    let mut state = state
-        .records_state
-        .write()
-        .map_err(|_| RecordsApiError::InternalServerError)?;
+    let mut state = state.records_state.write().await;
 
     state.try_remove_recommendations(payload.recommendations)?;
     state.try_save_file()?;
 
     Ok(())
+}
+
+async fn get_recommendation_info(
+    Path(date): Path<NaiveDate>,
+    State(state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, RecordsApiError> {
+    let state = state.records_state.read().await;
+    let details = state.get_recommendation_details(date).await?;
+
+    Ok(Json(details))
 }

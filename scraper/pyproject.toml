@@ -2,7 +2,7 @@
 name = "movie-club-scraper"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = ["letterboxdpy==5.3.7"]
+dependencies = ["letterboxdpy==5.3.7", "pydantic==2.12.5"]
 
 [project.scripts]
 movie-club-scraper = "movie_club_scraper:main"

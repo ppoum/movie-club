@@ -90,7 +90,7 @@ async fn get_schemas(
         .is_some_and(|hash| hash == DEFAULT_ADMIN_PASSWORD_HASH);
 
     Ok(Json(json!({
-        "schemas": schemas, "default_password": default_password
+        "schemas": schemas, "defaultPassword": default_password
     })))
 }
 

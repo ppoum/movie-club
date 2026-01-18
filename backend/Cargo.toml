@@ -20,6 +20,6 @@ serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 serde_with = "3.16.1"
 thiserror = "2.0.17"
-tokio = { version = "1.49.0", features = ["fs", "macros", "rt-multi-thread"] }
+tokio = { version = "1.49.0", features = ["fs", "macros", "process", "rt-multi-thread", "sync"] }
 tower-http = { version = "0.6.8", features = ["fs", "trace"] }
 tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }

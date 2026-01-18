@@ -1,16 +1,17 @@
 import argparse
-import json
 import logging
 import os
-from dataclasses import asdict, dataclass, field
 import sys
+from dataclasses import field
 from typing import Dict, List, Optional, Tuple
 
 from letterboxdpy.list import List as LBoxList
 from letterboxdpy.movie import Movie
 from letterboxdpy.user import User
+from pydantic import BaseModel, ConfigDict, TypeAdapter
+from pydantic.alias_generators import to_camel
 
-logger = logging.getLogger("letterboxd-scrape")
+logger = logging.getLogger("movie-club-scraper")
 
 
 def get_user_film_ratings(username: str) -> List[Tuple[str, Optional[int]]]:
@@ -25,27 +26,35 @@ def get_user_film_ratings(username: str) -> List[Tuple[str, Optional[int]]]:
     return result
 
 
-@dataclass
-class ActorInfo:
+class ActorInfo(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
     slug: str
     name: str
     role_name: str
 
 
-@dataclass
-class MovieInfo:
+class DirectorInfo(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+    slug: str
+    name: str
+    url: str
+
+
+class MovieInfo(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
     slug: str
     poster_url: str
     title: str
     year: int
     runtime: int
     avg_rating: float
-    director: str
-    top_actors: List[str]
+    director: Optional[DirectorInfo]
+    top_actors: List[ActorInfo]
     club_ratings: Dict[str, int | None] = field(init=False, default_factory=dict)
 
-@dataclass
-class UserInfo:
+
+class UserInfo(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
     username: str
     watchlist_length: int
     watched_films_total: int
@@ -62,9 +71,9 @@ def get_movie_info(slug: str, top_actor_count: int) -> MovieInfo:
     # Only extract the 1st director
     director_list = movie_instance.crew.get("director")
     if director_list is None:
-        director = "N/A"
+        director = None
     else:
-        director = director_list[0] if len(director_list) > 0 else "N/A"
+        director = director_list[0] if len(director_list) > 0 else None
 
     cast_list = movie_instance.cast[:top_actor_count]
     actors = []
@@ -136,8 +145,8 @@ def get_user_info(username: str, recent_count: int) -> UserInfo:
     def parse_diary(diary: dict[str, dict]) -> list[str]:
         recent_watched: dict[str, dict[str, list[dict[str, str]]]] = diary["months"]
         output = []
-        for (month, month_dict) in recent_watched.items():
-            for (day, movies) in month_dict.items():
+        for month_dict in recent_watched.values():
+            for movies in month_dict.values():
                 for movie in movies:
                     slug = movie.get("slug")
                     if slug is not None:
@@ -210,10 +219,10 @@ def run_list(args: argparse.Namespace):
         )
         movie_info.club_ratings = ratings
 
-    output_format = [asdict(m) for m in movies_info]
+    json_adapter = TypeAdapter(list[MovieInfo])
     output_file = os.path.join(output_dir, "stats.json")
-    with open(output_file, "w") as f:
-        f.write(json.dumps(output_format))
+    with open(output_file, "wb") as f:
+        f.write(json_adapter.dump_json(movies_info, by_alias=True))
     logger.info(f"Stats written to {output_file}")
 
 
@@ -227,11 +236,9 @@ def run_movies(args: argparse.Namespace):
         logger.info(f"Scraping {slug}...")
         movies.append(get_movie_info(slug, top_actor_count))
 
-    output_formatted = [asdict(m) for m in movies]
+    json_adapter = TypeAdapter(list[MovieInfo])
     # Remove the `club_ratings` field, since it is always empty for this subcommand
-    for item in output_formatted:
-        item.pop("club_ratings", None)
-    print(json.dumps(output_formatted))
+    print(json_adapter.dump_json(movies, by_alias=True, exclude={"__all__": {"club_ratings"}}).decode())
 
 
 def run_users(args: argparse.Namespace):
@@ -239,13 +246,13 @@ def run_users(args: argparse.Namespace):
     recent_count: int = args.recent_count
     logger.info(f"Scraping {len(usernames)} users")
 
-    users = []
+    users: list[UserInfo] = []
     for username in usernames:
         logger.info(f"Scraping {username}...")
         users.append(get_user_info(username, recent_count))
 
-    output_formatted = [asdict(u) for u in users]
-    print(json.dumps(output_formatted))
+    json_adapter = TypeAdapter(list[UserInfo])
+    print(json_adapter.dump_json(users, by_alias=True).decode())
 
 
 def get_env_var(name: str, default: str | None = None) -> str:
