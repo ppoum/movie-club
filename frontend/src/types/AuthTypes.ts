@@ -1,7 +1,7 @@
 export type Schema = "password" | "emailPassword";
 
 export interface GetSchemasResponse {
-  default_password: boolean;
+  defaultPassword: boolean;
   schemas: Schema[];
 }
 
