@@ -18,6 +18,12 @@ in
       description = "Movie club webapp package to run";
     };
 
+    scraperPackage = lib.mkOption {
+      type = lib.types.package;
+      default = flake.packages.${pkgs.system}.movie-club-scraper;
+      description = "Scraper package to use";
+    };
+
     port = lib.mkOption {
       type = lib.types.int;
       default = 80;
@@ -55,6 +61,7 @@ in
         StateDirectory = "movie-club";
         ExecStart = "${lib.getExe cfg.package}";
       };
+      path = [ cfg.scraperPackage ];
       environment = {
         PORT = builtins.toString cfg.port;
         DATA_FILE_PATH = cfg.data_file;
