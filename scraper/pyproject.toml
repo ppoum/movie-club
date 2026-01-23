@@ -2,7 +2,9 @@
 name = "movie-club-scraper"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = ["letterboxdpy==5.3.7"]
+dependencies = [
+    "letterboxdpy@git+https://github.com/nmcassa/letterboxdpy.git@746f70d393ea4ca52fe5311b70c42b8d29043783",
+]
 
 [project.scripts]
 movie-club-scraper = "movie_club_scraper:main"

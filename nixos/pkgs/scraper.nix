@@ -15,6 +15,22 @@ let
     sourcePreference = "wheel";
   };
 
+  # As long as we're building stuff from source, we'll need to explicitly define the build dependencies
+  extraBuildDependencyOverride = final: prev: {
+    letterboxdpy = prev.letterboxdpy.overrideAttrs (old: {
+      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
+        final.hatchling
+        final.pathspec
+        final.pluggy
+        final.packaging
+        final.trove-classifiers
+      ];
+    });
+    pykit = prev.pykit.overrideAttrs (old: {
+      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ final.setuptools ];
+    });
+  };
+
   # Obtain python version from pyproject.toml
   python = pkgs.lib.head (
     pyproject-nix.lib.util.filterPythonInterpreters {
@@ -31,6 +47,7 @@ let
         pkgs.lib.composeManyExtensions [
           pyproject-build-systems.overlays.wheel
           pyWorkspaceOverlay
+          extraBuildDependencyOverride
         ]
       );
 in
